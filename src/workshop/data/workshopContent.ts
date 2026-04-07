@@ -28,9 +28,14 @@ export interface ServiceLine {
   };
   /** Ids de `pdvServiciosModelo` a mostrar como extracto embebido solo en esta ficha */
   pdvRowIds: string[];
+  /**
+   * Entregables / mandatos tipo conjuntos (vista joint aterrizada a proyecto),
+   * más allá del extracto genérico de la matriz PdV.
+   */
+  serviciosTipoConjuntos: string[];
 }
 
-/** Identificador de horizonte — mismo id que `gtmHorizons` (Bloque 4) */
+/** Identificador de horizonte — mismo id que `gtmHorizons` */
 export type GtmHorizonId = "h1" | "h2" | "h3";
 
 export interface ClientAccount {
@@ -77,8 +82,14 @@ export interface AssetPoc {
   enlaceExterno?: { href: string; etiqueta: string };
   /** Vista previa / propuesta de valor en una frase */
   previewProducto?: string;
-  /** Bloque de detalle ampliado (integraciones, alcance) */
-  detalleAmpliado?: string;
+  /** Referencias de mercado opcionales (p. ej. proveedor para parte del alcance) */
+  referenciasMercado?: {
+    nombre: string;
+    href: string;
+    descripcion: string;
+    /** Logo público (favicon o asset); la UI tiene fallback si no carga */
+    logoUrl?: string;
+  }[];
 }
 
 /** Nivel de “llegada”: profundidad de relación / multi-contacto en cartera FY2026 */
@@ -86,7 +97,7 @@ export type LlegadaNivel = "muy-alta" | "alta" | "media" | "emergente";
 
 export interface SectorReachRow {
   id: string;
-  /** Etiqueta corta para filtros (Bloque 2) — debe coincidir conceptualmente con GTM */
+  /** Etiqueta corta para filtros — alineada conceptualmente con GTM */
   shortLabel: string;
   /** Frase puente hacia GTM (sin repetir la tabla de alcance) */
   gtmPuente: string;
@@ -118,11 +129,15 @@ export interface GtmHorizon {
   id: string;
   periodo: string;
   meses: string;
+  /** Ventana en calendario (meses; referencia FY27 = sep. 2026) */
+  arcoAnual: string;
+  /** Nota de arranque (jul. vs sep.) y lectura operativa */
+  ventanaCalendario: string;
   paises: string[];
   segmentos: string[];
   ofertaPrincipal: string;
   accionComercial: string;
-  /** Cómo usar el mapa de alcance/llegada en este horizonte */
+  /** Cómo leer alcance y llegada en este tramo */
   lecturaAlcance: string;
 }
 
@@ -219,7 +234,7 @@ export const budgetIngresosVisionK: BudgetIngresosPorEscenario[] = [
 ];
 
 export const budgetIngresosVisionNota =
-  "Facturación conjunta NFQ×INERCO anual (k€) por escenario de volumen. Los FTE implícitos (tabla siguiente) se alinean con estos importes mediante la regla editable de ~100 k€ de facturación por FTE y año; el coste fijo 2+2 del bloque superior es el ancla de lanzamiento, no el techo de capacidad en escenarios altos (refuerzos, partners o subcontratación).";
+  "Facturación conjunta NFQ×INERCO anual (k€) por escenario de volumen. Los FTE implícitos (tabla siguiente) se derivan de la regla editable de ~100 k€ de facturación por FTE y año. La inversión fija 2+2 FTE del año 1 es el punto de partida acordado; en escenarios altos pueden añadirse refuerzos, partners o subcontratación.";
 
 export interface DecisionTag {
   id: string;
@@ -228,12 +243,11 @@ export interface DecisionTag {
 }
 
 export const workshopMeta = {
-  titulo: "NFQ × INERCO | Workshop de definición de colaboración",
+  titulo: "NFQ × INERCO | Modelo de colaboración conjunta",
   subtitulo:
-    "Sesión ejecutiva para estructurar una colaboración end-to-end en sostenibilidad: desde ingeniería y modelización hasta reporting, producto y go-to-market conjunto.",
+    "Propuesta para integrar capacidades de ingeniería ambiental (INERCO) y asesoría financiera y ESG (NFQ): oferta conjunta, cartera objetivo, activos, plan comercial e inversión compartida.",
   fechaSesion: "Abril 2026",
-  facilitacion:
-    "Herramienta de facilitación — no comercial. Uso interno NFQ e INERCO.",
+  facilitacion: "Documento de trabajo confidencial · NFQ e INERCO",
 };
 
 /** Modelo PdV INERCO × NFQ — matriz Core / ingeniería / consultora / activo (extracto del documento de servicios) */
@@ -310,10 +324,10 @@ export const pdvServiciosModelo: PdvServicioRow[] = [
 ];
 
 export const executiveSummaryBullets = [
-  "Definir un portfolio inicial de servicios conjuntos alineado con demanda regulatoria (CSRD, taxonomía, riesgo físico) y capacidades de ingeniería ambiental.",
-  "Priorizar sectores y cuentas donde exista tracción o relación previa, y acordar 2 PoCs con potencial de industrialización a 12–24 meses.",
-  "Acotar un GTM por horizontes (0–6 / 6–12 / 12–24) con países, segmentos y acciones comerciales concretas.",
-  "Establecer un modelo mínimo viable de inversión y roles, con gobernanza clara entre ambas organizaciones.",
+  "Cerrar un portfolio inicial de servicios conjuntos alineado con regulación (CSRD, taxonomía, riesgo climático) y capacidad técnica INERCO.",
+  "Priorizar sectores y cuentas con tracción o relación previa y acordar dos pruebas de concepto con potencial de repetición a 12–24 meses.",
+  "Definir go-to-market por tramos temporales (0–6, 6–12 y 12–24 meses) con geografía, segmentos y acciones comerciales concretas.",
+  "Acordar inversión mínima, reparto de roles y gobernanza entre NFQ e INERCO.",
 ];
 
 export const serviceLines: ServiceLine[] = [
@@ -350,6 +364,12 @@ export const serviceLines: ServiceLine[] = [
         "Completar con INERCO: referencias recientes, límites de capacidad por vertical y datos típicos que suelen aportar en diagnóstico Net Zero.",
     },
     pdvRowIds: ["pdv-net-zero"],
+    serviciosTipoConjuntos: [
+      "Diagnóstico y hoja de ruta Net Zero por activo o vertical (ingeniería + modelo económico-financiero).",
+      "Inventarios y verificación de emisiones con trazabilidad hasta reporting y conversación con inversores.",
+      "Escenarios de descarbonización (ALQUID / sensibilidades) integrados en capex, payback y narrativa corporativa.",
+      "Acompañamiento en planes directores de sostenibilidad con priorización por impacto en riesgo y cadena de valor.",
+    ],
   },
   {
     id: "riesgo-fisico",
@@ -384,6 +404,12 @@ export const serviceLines: ServiceLine[] = [
         "Validar con INERCO: modelos propios vs datos externos, granularidad geográfica y tiempos de entrega típicos.",
     },
     pdvRowIds: ["adaptacion"],
+    serviciosTipoConjuntos: [
+      "Evaluación de riesgo físico y de transición por activo o cartera (datos técnicos + lectura financiera y de reporting).",
+      "Stress tests y escenarios para comités de riesgos, materialidad y requisitos TCFD / IFRS S2.",
+      "Integración de capas LEAP / TNFD / cadena (agua, biodiversidad, EUDR) en un único marco de riesgo cuando el perímetro lo exige.",
+      "Climate X (u otras fuentes) como capa analítica alineada a preguntas de dirección y supervisión.",
+    ],
   },
   {
     id: "biodiversidad",
@@ -417,6 +443,12 @@ export const serviceLines: ServiceLine[] = [
         "Completar con INERCO: experiencia TNFD/LEAP, datos de especies/uso del suelo y límites de alcance por proyecto.",
     },
     pdvRowIds: ["biodiv"],
+    serviciosTipoConjuntos: [
+      "Inventarios y línea base ambiental; dependencias e impactos TNFD / SBTN desde activo y territorio.",
+      "Due diligence de biodiversidad y cadena con traducción a riesgo, contratos y reporting.",
+      "Preparación de revelaciones y gobierno de datos para integrar naturaleza en CSRD / criterios de inversión.",
+      "EUDR y trazabilidad de suministro con evidencias técnicas auditables.",
+    ],
   },
   {
     id: "sustainable-finance",
@@ -451,6 +483,13 @@ export const serviceLines: ServiceLine[] = [
         "Acordar con INERCO: SLAs de datos, validación y formatos de entrega para integrarse en informe anual.",
     },
     pdvRowIds: ["csrd", "data-digital"],
+    serviciosTipoConjuntos: [
+      "Análisis de doble materialidad y diseño del perímetro ESRS con fuentes operativas y controles.",
+      "Reporting CSRD / memoria: arquitectura de datos, workflows de cierre y preparación para assurance.",
+      "Posicionamiento en índices y ratings (p. ej. DJSI, Sustainalytics) con evidencia técnica verificable.",
+      "Segunda opinión, marcos verdes y diálogo con inversores y supervisión apoyados en dato de planta.",
+      "Cuando el encargo es de plataforma: data model ESG, integración ERP/riesgos y gobierno del dato.",
+    ],
   },
   {
     id: "due-diligence",
@@ -484,30 +523,32 @@ export const serviceLines: ServiceLine[] = [
         "Definir con INERCO: plantillas mínimas de evidencia DNSH y roles en data room.",
     },
     pdvRowIds: ["dd-esg"],
+    serviciosTipoConjuntos: [
+      "ESG due diligence en transacciones: hallazgos técnicos + implicaciones financieras, contingencias y plan de remediación.",
+      "Prueba DNSH y elegibilidad taxonómica con documentación de obra/operación y checklist en data room.",
+      "Coordinación legal–riesgo–sostenibilidad con un único hilo de evidencias auditables.",
+      "Uso de DNSH evaluator (u otras herramientas) como capa de cribado coherente con la DD financiera.",
+    ],
   },
 ];
 
-/**
- * Taxonomía única Bloque 2 ↔ Bloque 4.
- * Macrosectores (ids en `sectorReachFy2026`) = misma rejilla en cuentas, mapa de alcance y GTM.
- */
+/** Taxonomía sectorial compartida: mismos ids de macrosector en cuentas, campaña y GTM. */
 export const taxonomiaCompartida = {
   macrosectores:
     "Ocho macrosectores: Energía & utilities · Infra & ingeniería · Telco & digital · Retail & consumo · Inmobiliario · Salud & pharma · Turismo & movilidad · Industrial.",
   h1:
-    "0–6 meses · ES/PT: prioridad operativa en energía/utilities, infra con proyecto claro, industrial regulado, retail agro-EUDR, telco en modo ancla.",
+    "ES/PT: prioridad operativa en energía/utilities, infra con proyecto claro, industrial regulado, retail agro-EUDR, telco en modo ancla.",
   h2:
-    "6–12 meses · ES/PT + México (select): escalar infra/PPP, PE y fondos con activos industriales, inmobiliario y salud como expansión lateral con mandato y datos.",
+    "ES/PT + México (select): escalar infra/PPP, PE y fondos con activos industriales, inmobiliario y salud como expansión lateral con mandato y datos.",
   h3:
-    "12–24 meses · sur Europa y Latam (select): industrialización, retail/turismo como playbooks, logístico a escala; siempre con partner local fuera del núcleo ES/PT.",
+    "Sur Europa y Latam (select): industrialización, retail/turismo como playbooks, logístico a escala; siempre con partner local fuera del núcleo ES/PT.",
 };
 
-/** Texto fijo de lectura: Bloque 2 = micro; Bloque 4 = agregado */
 export const clientsVsGtmCopy = {
   bloque2rol:
-    "Misma taxonomía de macrosectores (rejilla compartida con GTM): aquí el detalle por cuenta con referencias del PdV (proyecto y contacto); el mapa agregado de campaña y la priorización temporal están en el Bloque 4.",
-  linkGtm: "Ir al análisis agregado (GTM)",
-  linkClientes: "Ver cuentas objetivo (Bloque 2)",
+    "Cuentas y relaciones de referencia agrupadas por segmento, con encaje comercial y próximos pasos. Las cifras por sector son orientativas (campaña interna FY2026).",
+  linkGtm: "Ir a plan comercial y priorización",
+  linkClientes: "Volver a cartera y segmentos",
 };
 
 /** Cuentas con proyecto y contacto según PdV INERCO × NFQ (sample clientes) */
@@ -600,7 +641,7 @@ export const clientAccounts: ClientAccount[] = [
     detalleFacilitacion:
       "Caso sanitario con mandato claro de reporting; representa cluster Salud & pharma en el PdV.",
     gtmPuenteCuenta:
-      "Salud & pharma: doble materialidad y memoria CSRD — segmento explícito en el mapa común.",
+      "Salud & pharma: doble materialidad y memoria CSRD con mandato claro.",
   },
 ];
 
@@ -613,7 +654,7 @@ export const primerosLeads: LeadHighlight[] = [
     owner: "NFQ + INERCO (Sostenibilidad)",
     sectorClusterId: "infra-ingenieria",
     gtmPuente:
-      "Infra: evidencia técnica y gobierno de datos para expectativas de rating — mismo segmento que el mapa de alcance.",
+      "Infra: evidencia técnica y gobierno de datos para expectativas de rating.",
   },
   {
     id: "l2",
@@ -623,7 +664,7 @@ export const primerosLeads: LeadHighlight[] = [
     owner: "NFQ (marco) + INERCO (actividad / obra)",
     sectorClusterId: "infra-ingenieria",
     gtmPuente:
-      "Infra: taxonomía con pie en activo — mismo segmento que el mapa de alcance.",
+      "Infra: taxonomía con pie en activo y evidencia por actividad elegible.",
   },
   {
     id: "l3",
@@ -633,7 +674,7 @@ export const primerosLeads: LeadHighlight[] = [
     owner: "NFQ (reporting) + INERCO (dato operativo / SSMAC)",
     sectorClusterId: "salud-pharma",
     gtmPuente:
-      "Salud & pharma: reporting y compliance — segmento explícito en el mapa común.",
+      "Salud & pharma: reporting y compliance con foco en dato operativo y SSMAC.",
   },
 ];
 
@@ -653,9 +694,7 @@ export const assetPocs: AssetPoc[] = [
       etiqueta: "alquid.io",
     },
     previewProducto:
-      "Plataforma para medir, gestionar y proyectar emisiones y escenarios de descarbonización en activos industriales: inventarios, ALQUID Net Zero, trazabilidad y narrativa para dirección y stakeholders.",
-    detalleAmpliado:
-      "Preview: flujo típico desde datos de planta → modelo de emisiones → escenarios (incl. sensibilidad) → salidas ejecutivas alineadas a reporting y conversaciones con inversores. Complementa el diagnóstico INERCO con una capa de producto y gobierno del dato.",
+      "Plataforma para medir, gestionar y proyectar emisiones y escenarios de descarbonización en activos industriales: inventarios, ALQUID Net Zero, trazabilidad y narrativa para dirección y stakeholders. Flujo típico: datos de planta → modelo de emisiones → escenarios (incl. sensibilidad) → salidas ejecutivas alineadas a reporting y conversaciones con inversores; complementa el diagnóstico INERCO con capa de producto y gobierno del dato.",
   },
   {
     id: "riesgo",
@@ -663,14 +702,21 @@ export const assetPocs: AssetPoc[] = [
     subtitle:
       "Estrés de activos, exposición climática y lectura económica; integra naturaleza y cadena donde aplique.",
     demuestra:
-      "Puente entre modelos de exposición (física y de transición) y lenguaje de materialidad financiera, escenarios y priorización de medidas. Base para stress tests y conversación con dirección de riesgos y sostenibilidad.",
+      "Puente entre modelos de exposición (física y de transición) y lenguaje de materialidad financiera, escenarios y priorización de medidas; base para stress tests y conversación con dirección de riesgos y sostenibilidad. Alcance: amenazas climáticas y vulnerabilidad de activo; riesgo de transición (política, mercado, tecnología); integración de dimensiones LEAP, TNFD, cadena (agua, biodiversidad, suelo) y presiones EUDR cuando el perímetro lo exige, como capas de datos y materialidad enlazadas al mismo marco físico-transición. INERCO aporta modelo y evidencias; NFQ traduce a materialidad, escenarios y narrativa CSRD/IFRS donde proceda.",
     tipoCliente:
       "Corporativo con activos georreferenciados, infra en zonas sensibles o cartera de proyectos con colateral físico.",
     esfuerzo: "10–14 semanas con datos georreferenciados mínimos y acuerdo de perímetro.",
     industrializacion:
       "Media-alta: plantillas de datos y QA; reutilizable por sector con ajuste de supuestos.",
-    detalleAmpliado:
-      "Alcance ampliado: (1) amenazas climáticas y vulnerabilidad de activo; (2) riesgo de transición (política, mercado, tecnología); (3) integración de dimensiones LEAP / TNFD / cadena (agua, biodiversidad, suelo) y presiones EUDR cuando el perímetro lo exige — no como PoC aislado, sino como capas de datos y materialidad enlazadas al mismo marco de riesgo físico-transición. INERCO aporta modelo y evidencias; NFQ traduce a materialidad, escenarios y narrativa CSRD/IFRS donde proceda.",
+    referenciasMercado: [
+      {
+        nombre: "Climate X",
+        href: "https://www.climate-x.com/",
+        descripcion:
+          "Opción de mercado para la capa de riesgo físico: datos y analítica (p. ej. Spectra) con pérdidas esperadas y escenarios por activo o cartera; integrable por API o informes. Complementa el marco conjunto cuando el cliente quiere un estándar de mercado en la parte física y NFQ/INERCO cierran materialidad, transición y reporting.",
+        logoUrl: "https://www.climate-x.com/favicon.ico",
+      },
+    ],
   },
   {
     id: "csrd",
@@ -685,9 +731,7 @@ export const assetPocs: AssetPoc[] = [
     industrializacion:
       "Alta: diseño modular (ESRS, datos, workflows); reutilizable en nuevos clientes con configuración.",
     previewProducto:
-      "Línea de producto en desarrollo: arquitectura de datos ESG, workflows de validación, documentación metodológica y preparación para revisión interna / assurance — enlazada con el caso de riesgo físico-transición para que los mismos datos sirvan a materialidad y a memoria.",
-    detalleAmpliado:
-      "Sustituye el antiguo tercer PoC centrado solo en LEAP/TNFD/EUDR: esas dimensiones se integran en el marco de riesgo físico y transición (tarjeta central). El tercer activo es la suite CSRD: capa de reporting y control que cierra el ciclo desde operación técnica hasta disclosure.",
+      "Línea de producto en desarrollo: arquitectura de datos ESG, workflows de validación, documentación metodológica y preparación para revisión interna / assurance — enlazada con el caso de riesgo físico-transición para que los mismos datos alimenten materialidad y memoria. Capa de reporting y control que cierra el ciclo desde operación técnica hasta disclosure.",
   },
 ];
 
@@ -696,7 +740,7 @@ export const assetPocs: AssetPoc[] = [
  * Cifras: orden de magnitud interno para facilitación; la criba fina (estado, temática, duplicados) es trabajo comercial previo a priorización.
  */
 export const campaignCorporatesFy2026: CampaignCorporatesMeta = {
-  titulo: "Campaña Corporates FY2026 — mapa de alcance",
+  titulo: "Campaña Corporates FY2026 — volumen y priorización",
   fuente: "Listado interno de leads y contactos (Campañas FY2026 - Corporates)",
   notaMetodologia:
     "Se agrupan entidades en macrosectores homogéneos para GTM. “Cuentas” = empresas distintas; “contactos” = filas del listado (varias personas por cuenta). La llegada refleja profundidad típica (multi-rol, CSO/ESG/IR). Cifras redondeadas y sujetas a criba (estado reunión, duplicados, relevancia NFQ×INERCO).",
@@ -832,8 +876,11 @@ export const sectorReachFy2026: SectorReachRow[] = [
 export const gtmHorizons: GtmHorizon[] = [
   {
     id: "h1",
-    periodo: "Horizonte 1",
+    periodo: "Tramo 1",
     meses: "0–6 meses",
+    arcoAnual: "sep. 2026 – feb. 2027",
+    ventanaCalendario:
+      "Referencia FY27: inicio sep. 2026. Si arranque jul. 2026 (lo antes posible): jul. – dic. 2026.",
     paises: ["España", "Portugal"],
     segmentos: [
       "Energía & utilities (regulados, redes, renovables IPP)",
@@ -847,12 +894,15 @@ export const gtmHorizons: GtmHorizon[] = [
     accionComercial:
       "Tres cuentas objetivo con plan conjunto; webinars sectoriales cerrados; propuestas tipo en energía/utilities, infra temprana y retail agro.",
     lecturaAlcance:
-      "Orden de prioridad alineado con el mapa de alcance: mayor densidad en Energía & utilities e Infra & ingeniería; Telco solo como ancla única; Retail & consumo e Industrial en paralelo según capacidad. Misma rejilla de macrosectores que en el Bloque 2.",
+      "Priorizar mayor densidad en Energía & utilities e Infra & ingeniería; Telco solo como ancla única; Retail & consumo e Industrial en paralelo según capacidad.",
   },
   {
     id: "h2",
-    periodo: "Horizonte 2",
+    periodo: "Tramo 2",
     meses: "6–12 meses",
+    arcoAnual: "mar. 2027 – ago. 2027",
+    ventanaCalendario:
+      "FY27: mar. – ago. 2027. Con arranque jul. 2026: ene. – jun. 2027.",
     paises: ["España", "Portugal", "México (select)"],
     segmentos: [
       "Infra & PPP y proyectos (escala; incl. México select)",
@@ -866,16 +916,19 @@ export const gtmHorizons: GtmHorizon[] = [
     accionComercial:
       "Partnerships con promotores y estructuras de proyecto; co-selling con riesgos; referencias de PoCs; expansión solo con criba de mandato y datos (inmobiliario, salud).",
     lecturaAlcance:
-      "Continuidad natural desde H1 en infra, energía e industrial; añaden peso explícito Inmobiliario y Salud & pharma como expansión lateral. Geografía ES/PT más México select — mismos clusters que el Bloque 2.",
+      "Continuidad desde el primer tramo en infra, energía e industrial; Inmobiliario y Salud & pharma ganan peso como expansión lateral. Geografía ES/PT más México select.",
   },
   {
     id: "h3",
-    periodo: "Horizonte 3",
+    periodo: "Tramo 3",
     meses: "12–24 meses",
+    arcoAnual: "sep. 2027 – ago. 2028",
+    ventanaCalendario:
+      "FY27: sep. 2027 – ago. 2028 (meses 12–24 desde sep. 2026). Con arranque jul. 2026: jul. 2027 – jun. 2028.",
     paises: ["Sur de Europa", "Latam select (con partner local)"],
     segmentos: [
       "Industrial: descarbonización profunda y repetición de módulos",
-      "Retail & consumo: playbooks de cadena tras pilotos en H1",
+      "Retail & consumo: playbooks de cadena tras pilotos en el primer tramo",
       "Turismo & movilidad: narrativa y huella a escala",
       "Inmobiliario: real estate logístico y carteras maduras",
       "Energía / infra en Latam (siempre con partner local)",
@@ -885,7 +938,7 @@ export const gtmHorizons: GtmHorizon[] = [
     accionComercial:
       "Programa de partners; pricing por módulos; governance estable entre NFQ e INERCO.",
     lecturaAlcance:
-      "Retail y Turismo & movilidad pasan a playbooks solo después de victorias en H1–H2. Industrial e inmobiliario logístico en modo escala. Latam select exige partner local — coherente con cuentas infra/energía fuera del núcleo ibérico en el Bloque 2.",
+      "Retail y Turismo & movilidad pasan a playbooks solo después de victorias en los dos primeros tramos. Industrial e inmobiliario logístico en modo escala. En Latam select, partner local obligatorio; priorizar cuentas infra/energía con gobierno estable fuera del núcleo ibérico.",
   },
 ];
 
@@ -929,7 +982,7 @@ export const decisionTags: DecisionTag[] = [
   { id: "sectores", label: "Sectores prioritarios", defaultValue: "Energía e infraestructuras; Agroalimentario; Industria pesada" },
   { id: "pocs", label: "2 PoCs a lanzar", defaultValue: "ALQUID / Net Zero; Riesgo físico / transición; Suite CSRD (en prep.)" },
   { id: "gtm", label: "GTM inicial", defaultValue: "ES/PT — utilities, infra, agro mid-cap, industrial" },
-  { id: "equipo", label: "Equipo mínimo", defaultValue: "Base lanzamiento: 2 FTE NFQ + 2 FTE INERCO (costes medios parametrizados en Bloque 5)" },
+  { id: "equipo", label: "Equipo mínimo", defaultValue: "Base lanzamiento: 2 FTE NFQ + 2 FTE INERCO (costes medios según parte de inversión)" },
 ];
 
 /** Pasos operativos posteriores al cierre en sala — editable en datos */

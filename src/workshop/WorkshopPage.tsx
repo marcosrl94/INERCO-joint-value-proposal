@@ -33,7 +33,7 @@ export function WorkshopPage() {
             NFQ × INERCO · {workshopMeta.fechaSesion}
           </p>
           <p className="mt-2 text-center text-xs text-zinc-500">
-            Documento de trabajo. Distribución solo entre participantes autorizados.
+            Confidencial. Solo para participantes autorizados en la sesión.
           </p>
         </div>
       </footer>

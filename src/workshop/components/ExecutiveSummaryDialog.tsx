@@ -56,7 +56,7 @@ export function ExecutiveSummaryDialog({
             className="bg-emerald-600 hover:bg-emerald-500"
             onClick={goToDecisions}
           >
-            Ir a decisiones a cerrar
+            Ir a decisiones
           </Button>
         </div>
       </DialogContent>

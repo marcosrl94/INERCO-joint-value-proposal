@@ -19,7 +19,7 @@ export function JointCapacityBadge({
   return (
     <Badge
       variant="outline"
-      title="Lectura conjunta según matriz de capacidad (parametrizable en serviceCapacity.ts)"
+      title="Equilibrio relativo de capacidad NFQ / INERCO en esta línea"
       className={cn(
         "max-w-[200px] border font-medium leading-snug break-words sm:max-w-none",
         "border-violet-500/35 bg-violet-500/10 text-violet-100",

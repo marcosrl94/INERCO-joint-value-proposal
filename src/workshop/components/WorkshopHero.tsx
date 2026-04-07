@@ -49,7 +49,7 @@ export function WorkshopHero({ onExecutiveSummary }: WorkshopHeroProps) {
                 className="h-11 gap-2 bg-emerald-600 text-white hover:bg-emerald-500"
                 onClick={() => scrollToId("servicios")}
               >
-                Empezar workshop
+                Ver la propuesta
                 <ArrowRight className="size-4" />
               </Button>
               <Button
@@ -104,7 +104,7 @@ export function WorkshopHero({ onExecutiveSummary }: WorkshopHeroProps) {
                     decoding="async"
                   />
                   <p className="text-center text-[11px] leading-relaxed text-zinc-500">
-                    Joint workshop · definición de colaboración
+                    Colaboración conjunta — modelo de valor compartido
                   </p>
                 </div>
               </div>

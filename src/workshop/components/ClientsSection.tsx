@@ -117,8 +117,8 @@ export function ClientsSection() {
   return (
     <SectionShell
       id="clientes"
-      eyebrow="Bloque 2"
-      title="Clientes y sectores prioritarios"
+      eyebrow="02 · Mercado"
+      title="Cartera y segmentos objetivo"
       description={clientsVsGtmCopy.bloque2rol}
     >
       <div className="mb-8 rounded-2xl border border-white/[0.07] bg-zinc-900/40 p-4">
@@ -128,7 +128,7 @@ export function ClientsSection() {
           </div>
           <div className="min-w-0 space-y-2">
             <p className="text-sm font-medium text-zinc-200">
-              Misma taxonomía que Go-to-market
+              Ocho segmentos para priorizar conversación
             </p>
             <p className="text-xs leading-relaxed text-zinc-500">
               {taxonomiaCompartida.macrosectores}
@@ -137,11 +137,10 @@ export function ClientsSection() {
         </div>
       </div>
 
-      {/* Filtros = mismos macrosectores que GTM */}
       <div className="mb-6">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Macrosector (rejilla compartida con GTM)
+            Filtrar por segmento
           </p>
           <div className="flex gap-2">
             <Button
@@ -206,7 +205,7 @@ export function ClientsSection() {
         {singleCluster ? (
           <div className="mt-4 rounded-xl border border-sky-500/20 bg-sky-500/[0.06] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-300/90">
-              Lectura por cluster · {singleCluster.shortLabel}
+              Perspectiva del segmento · {singleCluster.shortLabel}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-zinc-400">
               {singleCluster.gtmPuente}
@@ -214,11 +213,11 @@ export function ClientsSection() {
           </div>
         ) : (
           <p className="mt-3 text-[11px] text-zinc-600">
-            Selecciona un solo macrosector para ver la lectura detallada del cluster.
+            Seleccione un solo segmento para ver el comentario estratégico de ese cluster.
           </p>
         )}
         <p className="mt-2 text-[11px] text-zinc-600">
-          Cifras de campaña en una línea. El mapa agregado y la priorización temporal están en el bloque Go-to-market.
+          Cifras orientativas de cuentas y contactos por segmento (campaña FY2026).
         </p>
       </div>
 
@@ -226,7 +225,7 @@ export function ClientsSection() {
       <div className="mb-10">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-zinc-200">
-            Cuentas objetivo (detalle)
+            Cuentas de referencia
           </h3>
           <span className="text-[11px] text-zinc-600">
             {filteredClients.length} mostradas
@@ -253,7 +252,7 @@ export function ClientsSection() {
                     </p>
                     {row.temaPdV ? (
                       <p className="text-[11px] text-violet-300/90">
-                        <span className="text-zinc-600">PdV · </span>
+                        <span className="text-zinc-600">Eje temático · </span>
                         {row.temaPdV}
                       </p>
                     ) : null}

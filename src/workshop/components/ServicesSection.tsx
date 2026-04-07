@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,6 +6,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   pdvServiciosModelo,
   serviceLines,
@@ -26,6 +35,8 @@ import {
   ClipboardList,
   Cpu,
   FileSearch,
+  Handshake,
+  LayoutList,
   Network,
   Sparkles,
   Table2,
@@ -41,18 +52,24 @@ function PdvRowEmbed({ rows }: { rows: PdvServicioRow[] }) {
   if (rows.length === 0) return null;
   return (
     <div className="overflow-hidden rounded-lg border border-violet-500/20 bg-violet-500/[0.04]">
-      <p className="flex items-center gap-2 border-b border-violet-500/15 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-violet-300/90">
-        <Table2 className="size-3 shrink-0" aria-hidden />
-        PdV — extracto (esta línea)
+      <p className="flex items-center gap-2 border-b border-violet-500/15 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-violet-300/90 md:px-4 md:py-3">
+        <Table2 className="size-3.5 shrink-0" aria-hidden />
+        Roles conjuntos por servicio (extracto)
       </p>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] border-collapse text-left text-[11px]">
+        <table className="w-full min-w-[600px] border-collapse text-left text-xs md:min-w-0 md:text-sm">
           <thead>
-            <tr className="border-b border-zinc-800/90 bg-zinc-950/80 text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
-              <th className="px-2.5 py-2 align-bottom">Core</th>
-              <th className="px-2.5 py-2 align-bottom text-emerald-400/85">INERCO</th>
-              <th className="px-2.5 py-2 align-bottom text-sky-400/85">NFQ</th>
-              <th className="px-2.5 py-2 align-bottom text-zinc-500">Herramienta</th>
+            <tr className="border-b border-zinc-800/90 bg-zinc-950/80 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 md:text-[11px]">
+              <th className="px-3 py-2.5 align-bottom md:px-4 md:py-3">Core</th>
+              <th className="px-3 py-2.5 align-bottom text-emerald-400/85 md:px-4 md:py-3">
+                INERCO
+              </th>
+              <th className="px-3 py-2.5 align-bottom text-sky-400/85 md:px-4 md:py-3">
+                NFQ
+              </th>
+              <th className="px-3 py-2.5 align-bottom text-zinc-500 md:px-4 md:py-3">
+                Herramienta
+              </th>
             </tr>
           </thead>
           <tbody className="text-zinc-300">
@@ -61,16 +78,16 @@ function PdvRowEmbed({ rows }: { rows: PdvServicioRow[] }) {
                 key={row.id}
                 className="border-b border-zinc-800/60 last:border-0"
               >
-                <td className="align-top px-2.5 py-2.5 font-medium text-zinc-200">
+                <td className="align-top px-3 py-3 font-medium text-zinc-200 md:px-4 md:py-3.5">
                   {row.core}
                 </td>
-                <td className="align-top px-2.5 py-2.5 leading-relaxed text-zinc-400">
+                <td className="align-top px-3 py-3 leading-relaxed text-zinc-400 md:px-4 md:py-3.5">
                   {row.servicioInerco}
                 </td>
-                <td className="align-top px-2.5 py-2.5 leading-relaxed text-zinc-400">
+                <td className="align-top px-3 py-3 leading-relaxed text-zinc-400 md:px-4 md:py-3.5">
                   {row.servicioNfq}
                 </td>
-                <td className="align-top px-2.5 py-2.5 text-zinc-500">
+                <td className="align-top px-3 py-3 text-zinc-500 md:px-4 md:py-3.5">
                   <span className="inline-flex items-center gap-1">
                     <Cpu className="size-3 shrink-0 text-zinc-600" aria-hidden />
                     {row.activoDigital ?? "—"}
@@ -86,152 +103,236 @@ function PdvRowEmbed({ rows }: { rows: PdvServicioRow[] }) {
 }
 
 export function ServicesSection() {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState(serviceLines[0].id);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const selected = serviceLines.find((s) => s.id === selectedId) ?? serviceLines[0];
+
+  useEffect(() => {
+    setDetailOpen(false);
+  }, [selectedId]);
+
+  const lectura = getJointCapacityReadout(
+    selected.capacityNfq,
+    selected.capacityInerco
+  );
+  const pdvRows = pdvRowsFor(selected.pdvRowIds);
 
   return (
     <SectionShell
       id="servicios"
-      eyebrow="Bloque 1"
-      title="Servicios conjuntos"
-      description="Cada tarjeta es una dimensión del workshop. La matriz PdV aparece solo como extracto dentro de la ficha que toca — no como bloque suelto. Activos y PoCs: Bloque 3."
+      eyebrow="01 · Oferta"
+      title="Líneas de servicio conjunto"
+      description="Seleccione una dimensión para ver propuesta conjunta, reparto INERCO/NFQ, extracto de la matriz de roles y el detalle desplegable. Las etiquetas de capacidad indican dónde cada parte aporta más peso relativo en esa línea."
     >
-      <p className="mb-6 rounded-xl border border-white/[0.06] bg-zinc-900/40 px-4 py-3 text-xs leading-relaxed text-zinc-500">
-        <Sparkles className="mr-1.5 inline size-3.5 text-emerald-400/90" />
-        Badges de capacidad: fuente editable en{" "}
-        <code className="rounded bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-400">
-          serviceCapacity.ts
-        </code>
-        .
+      <p className="mb-6 rounded-xl border border-white/[0.06] bg-zinc-900/40 px-4 py-3 text-xs leading-relaxed text-zinc-400 md:text-sm">
+        <Sparkles className="mr-1.5 inline size-3.5 text-emerald-400/90" aria-hidden />
+        Capacidad relativa por parte: alto, medio o a reforzar — útil para priorizar conversación y staffing en propuestas.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {serviceLines.map((s) => {
-          const open = openId === s.id;
-          const lectura = getJointCapacityReadout(s.capacityNfq, s.capacityInerco);
-          const pdvRows = pdvRowsFor(s.pdvRowIds);
-          return (
-            <Card
-              key={s.id}
-              className="group flex flex-col border-zinc-800/90 bg-zinc-900/35 transition-all duration-300 hover:border-emerald-500/25 hover:bg-zinc-900/60 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.08)]"
-            >
-              <CardHeader className="gap-3">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <CardTitle className="text-base font-semibold text-zinc-100">
-                    {s.title}
-                  </CardTitle>
-                  <JointCapacityBadge
-                    capacityNfq={s.capacityNfq}
-                    capacityInerco={s.capacityInerco}
-                  />
-                </div>
-                <CapacityMiniChips
-                  capacityNfq={s.capacityNfq}
-                  capacityInerco={s.capacityInerco}
-                />
-                <p className="text-[11px] leading-relaxed text-zinc-500">
-                  {lectura.resumen}
-                </p>
-              </CardHeader>
-              <CardContent className="mt-auto flex flex-1 flex-col space-y-4 text-sm text-zinc-400">
-                <p className="leading-relaxed">{s.description}</p>
+      {/* Móvil: selector */}
+      <div className="mb-6 lg:hidden">
+        <Label
+          htmlFor="servicio-linea"
+          className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
+        >
+          <LayoutList className="size-3.5" aria-hidden />
+          Línea de servicio
+        </Label>
+        <Select value={selectedId} onValueChange={setSelectedId}>
+          <SelectTrigger
+            id="servicio-linea"
+            className="h-11 w-full border-zinc-700 bg-zinc-950/80 text-left text-sm text-zinc-100"
+          >
+            <SelectValue placeholder="Elija una línea" />
+          </SelectTrigger>
+          <SelectContent className="border-zinc-700 bg-zinc-950">
+            {serviceLines.map((s) => (
+              <SelectItem key={s.id} value={s.id} className="text-sm">
+                {s.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-                <PdvRowEmbed rows={pdvRows} />
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-white/[0.06] bg-zinc-950/50 p-3">
-                    <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-400/90">
-                      <Building2 className="size-3.5" />
-                      INERCO (resumen)
-                    </p>
-                    <p className="leading-relaxed text-zinc-400">{s.inerco}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/[0.06] bg-zinc-950/50 p-3">
-                    <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-400/90">
-                      <Network className="size-3.5" />
-                      NFQ (resumen)
-                    </p>
-                    <p className="leading-relaxed text-zinc-400">{s.nfq}</p>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-9 w-full justify-between gap-2 border border-zinc-800/90 bg-zinc-950/40 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100",
-                    open && "border-emerald-500/25 bg-emerald-500/5"
-                  )}
-                  onClick={() => setOpenId(open ? null : s.id)}
-                  aria-expanded={open}
-                >
-                  <span className="flex items-center gap-2 text-xs font-medium">
-                    <ClipboardList className="size-3.5 text-emerald-500/90" />
-                    {open ? "Cerrar ficha detallada" : "Abrir ficha detallada"}
-                  </span>
-                  <ChevronDown
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+        {/* Desktop: menú lateral */}
+        <nav
+          className="hidden shrink-0 lg:block lg:w-[min(100%,280px)] lg:pt-1"
+          aria-label="Líneas de servicio"
+        >
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            Líneas
+          </p>
+          <ul className="space-y-1 border-l border-zinc-800 pl-1">
+            {serviceLines.map((s) => {
+              const on = s.id === selectedId;
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(s.id)}
                     className={cn(
-                      "size-4 shrink-0 transition-transform",
-                      open && "rotate-180"
+                      "w-full rounded-r-lg border border-transparent py-2.5 pl-3 pr-2 text-left text-sm leading-snug transition-colors",
+                      on
+                        ? "border-emerald-500/30 bg-emerald-500/10 font-medium text-emerald-100 shadow-[inset_3px_0_0_0_rgba(16,185,129,0.85)]"
+                        : "text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200"
                     )}
-                  />
-                </Button>
+                  >
+                    {s.title}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-                {open ? (
-                  <div className="space-y-5 border-t border-zinc-800/80 pt-4">
-                    <div>
-                      <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-sky-400/90">
-                        <Network className="size-3.5" />
-                        NFQ — propuesta de valor
-                      </p>
-                      <ul className="list-inside list-disc space-y-1.5 text-xs leading-relaxed text-zinc-400">
-                        {s.nfqPropuestaValor.map((line) => (
-                          <li key={line.slice(0, 40)}>{line}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-sky-300/80">
-                        <BookOpen className="size-3.5" />
-                        NFQ — credenciales / foco
-                      </p>
-                      <ul className="list-inside list-disc space-y-1.5 text-xs leading-relaxed text-zinc-400">
-                        {s.nfqCredenciales.map((line) => (
-                          <li key={line.slice(0, 40)}>{line}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-4">
-                      <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/90">
-                        <FileSearch className="size-3.5" />
-                        INERCO — screening público (previo)
-                      </p>
-                      <p className="mb-3 text-[11px] italic leading-relaxed text-zinc-500">
-                        {s.inercoScreeningPublico.fuente}
-                      </p>
-                      <ul className="list-inside list-disc space-y-1.5 text-xs leading-relaxed text-zinc-400">
-                        {s.inercoScreeningPublico.senales.map((line) => (
-                          <li key={line.slice(0, 40)}>{line}</li>
-                        ))}
-                      </ul>
-                      <p className="mt-3 border-t border-emerald-500/10 pt-3 text-[11px] text-zinc-500">
-                        <span className="font-medium text-zinc-400">
-                          Guía para la sala:{" "}
-                        </span>
-                        {s.inercoScreeningPublico.sumUpPlaceholder}
-                      </p>
-                    </div>
-                    <EditableNote
-                      sectionId={`servicios-sumup-${s.id}`}
-                      label="Sum-up en vivo (completar con INERCO)"
-                      placeholder="Acuerdos, referencias concretas, gaps y owners…"
-                    />
+        {/* Ficha única — ancho completo del panel */}
+        <div className="min-w-0 flex-1">
+          <Card className="border-zinc-800/90 bg-zinc-900/35 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+            <CardHeader className="gap-4 px-5 pb-2 pt-6 sm:px-8 sm:pt-8">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                <CardTitle className="text-lg font-semibold leading-snug text-zinc-100 sm:text-xl md:text-2xl md:leading-tight">
+                  {selected.title}
+                </CardTitle>
+                <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                  <JointCapacityBadge
+                    capacityNfq={selected.capacityNfq}
+                    capacityInerco={selected.capacityInerco}
+                    className="max-w-none text-xs sm:text-sm"
+                  />
+                  <CapacityMiniChips
+                    capacityNfq={selected.capacityNfq}
+                    capacityInerco={selected.capacityInerco}
+                    className="justify-end text-[11px] sm:text-xs"
+                  />
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed text-zinc-500 md:text-base">
+                {lectura.resumen}
+              </p>
+            </CardHeader>
+            <CardContent className="flex flex-col space-y-6 px-5 pb-8 pt-2 text-sm text-zinc-400 sm:px-8 md:space-y-8 md:text-base">
+              <p className="leading-relaxed">{selected.description}</p>
+
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4 md:p-6">
+                <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-emerald-300/90 md:text-xs">
+                  <Handshake className="size-4 shrink-0" aria-hidden />
+                  Servicios tipo / proyecto conjunto
+                </p>
+                <p className="mb-4 text-sm leading-relaxed text-zinc-500 md:text-[15px]">
+                  Ejemplos de alcance tipo que pueden licitarse o pilotarse de forma conjunta (más cercanos a un SOW que a la fila resumida de la matriz).
+                </p>
+                <ul className="space-y-3 border-t border-emerald-500/10 pt-4 text-sm leading-relaxed text-zinc-300 md:text-base">
+                  {selected.serviciosTipoConjuntos.map((line) => (
+                    <li key={line.slice(0, 48)} className="flex gap-3">
+                      <span
+                        className="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-500/80"
+                        aria-hidden
+                      />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <PdvRowEmbed rows={pdvRows} />
+
+              <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+                <div className="rounded-xl border border-white/[0.06] bg-zinc-950/50 p-4 md:p-5">
+                  <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-400/90 md:mb-3 md:text-xs">
+                    <Building2 className="size-4" />
+                    INERCO (resumen)
+                  </p>
+                  <p className="leading-relaxed text-zinc-400">{selected.inerco}</p>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-zinc-950/50 p-4 md:p-5">
+                  <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-400/90 md:mb-3 md:text-xs">
+                    <Network className="size-4" />
+                    NFQ (resumen)
+                  </p>
+                  <p className="leading-relaxed text-zinc-400">{selected.nfq}</p>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-11 w-full justify-between gap-2 border border-zinc-800/90 bg-zinc-950/40 px-4 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 md:h-12",
+                  detailOpen && "border-emerald-500/25 bg-emerald-500/5"
+                )}
+                onClick={() => setDetailOpen((v) => !v)}
+                aria-expanded={detailOpen}
+              >
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <ClipboardList className="size-4 text-emerald-500/90" />
+                  {detailOpen ? "Cerrar ficha detallada" : "Abrir ficha detallada"}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "size-5 shrink-0 transition-transform",
+                    detailOpen && "rotate-180"
+                  )}
+                />
+              </Button>
+
+              {detailOpen ? (
+                <div className="space-y-6 border-t border-zinc-800/80 pt-6 md:space-y-8 md:pt-8">
+                  <div>
+                    <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-sky-400/90 md:text-[11px]">
+                      <Network className="size-4" />
+                      NFQ — propuesta de valor
+                    </p>
+                    <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-zinc-400 md:text-base">
+                      {selected.nfqPropuestaValor.map((line) => (
+                        <li key={line.slice(0, 40)}>{line}</li>
+                      ))}
+                    </ul>
                   </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          );
-        })}
+                  <div>
+                    <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-sky-300/80 md:text-[11px]">
+                      <BookOpen className="size-4" />
+                      NFQ — credenciales y foco
+                    </p>
+                    <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-zinc-400 md:text-base">
+                      {selected.nfqCredenciales.map((line) => (
+                        <li key={line.slice(0, 40)}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-5 md:p-6">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400/90 md:text-[11px]">
+                      <FileSearch className="size-4" />
+                      INERCO — señales públicas (referencia)
+                    </p>
+                    <p className="mb-3 text-sm italic leading-relaxed text-zinc-500 md:text-base">
+                      {selected.inercoScreeningPublico.fuente}
+                    </p>
+                    <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-zinc-400 md:text-base">
+                      {selected.inercoScreeningPublico.senales.map((line) => (
+                        <li key={line.slice(0, 40)}>{line}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-4 border-t border-emerald-500/10 pt-4 text-sm text-zinc-500 md:text-base">
+                      <span className="font-medium text-zinc-400">
+                        Mensaje clave:{" "}
+                      </span>
+                      {selected.inercoScreeningPublico.sumUpPlaceholder}
+                    </p>
+                  </div>
+                  <EditableNote
+                    sectionId={`servicios-sumup-${selected.id}`}
+                    label="Notas de cierre (equipo)"
+                    placeholder="Acuerdos, referencias, gaps y responsables…"
+                  />
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
       </div>
       <EditableNote sectionId="servicios" className="mt-10" />
     </SectionShell>

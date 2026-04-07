@@ -43,9 +43,9 @@ export function BudgetSection() {
   return (
     <SectionShell
       id="budget"
-      eyebrow="Bloque 5"
-      title="Budget & People"
-      description="Inversión desagregada por parte (NFQ vs INERCO), escenarios de volumen y visión de ingresos FY27–FY29 por dimensión y ticket."
+      eyebrow="05 · Inversión"
+      title="Inversión y capacidad"
+      description="Coste de personas año 1 por parte, escenarios de volumen de proyectos e ingresos conjuntos FY27–FY29 según ticket medio por dimensión. Cifras orientativas para debate; conviene validar supuestos con finanzas de cada parte."
     >
       {/* Inversión por parte — año 1 */}
       <div className="mb-10 rounded-2xl border border-white/[0.08] bg-zinc-900/45 p-5 md:p-6">
@@ -129,11 +129,7 @@ export function BudgetSection() {
           </table>
         </div>
         <p className="mt-3 text-[11px] text-zinc-600">
-          Edita FTE y coste medio en{" "}
-          <code className="rounded bg-zinc-800 px-1 py-0.5 text-[10px]">
-            budgetFteParams
-          </code>{" "}
-          (workshopContent). El total se recalcula en la vista.
+          Los supuestos de FTE y coste medio pueden ajustarse para reflejar el acuerdo interno de cada parte; el total se actualiza automáticamente.
         </p>
       </div>
 
@@ -187,19 +183,11 @@ export function BudgetSection() {
               Ingresos (visión FY27–FY29)
             </p>
             <p className="mt-2 max-w-3xl text-xs leading-relaxed text-zinc-500">
-              {budgetIngresosVisionNota} Regla FTE:{" "}
+              {budgetIngresosVisionNota} Regla de referencia para FTE implícito:{" "}
               <span className="font-medium text-zinc-400">
                 {budgetFacturacionPorFteK} k€/FTE·año
-              </span>{" "}
-              (
-              <code className="rounded bg-zinc-800 px-1 py-0.5 text-[10px]">
-                budgetFacturacionPorFteK
-              </code>
-              ). Ticket medio ponderado dimensión: ~{budgetTicketMedioPonderadoK} k€ (
-              <code className="rounded bg-zinc-800 px-1 py-0.5 text-[10px]">
-                budgetTicketMedioPonderadoK
-              </code>
-              ).
+              </span>
+              . Ticket medio ponderado por dimensión (orientativo): ~{budgetTicketMedioPonderadoK} k€.
             </p>
           </div>
         </div>

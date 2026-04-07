@@ -42,8 +42,8 @@ export function SummarySection() {
     <SectionShell
       id="resumen"
       eyebrow="Cierre"
-      title="Decisiones a cerrar hoy"
-      description="Editad inline los campos para reflejar lo acordado en sala. Se guardan localmente en este dispositivo."
+      title="Decisiones y acuerdos"
+      description="Complete cada campo con el resultado consensuado. Los datos se guardan en este navegador (local) para seguimiento posterior entre equipos."
     >
       <div className="grid gap-4 md:grid-cols-2">
         {decisionTags.map((d) => (
@@ -75,11 +75,7 @@ export function SummarySection() {
           Próximos pasos inmediatos
         </p>
         <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-          Tras cerrar las decisiones de arriba, priorizar estas acciones en los días siguientes. Editad la lista en{" "}
-          <code className="rounded bg-zinc-900 px-1 py-0.5 text-[10px] text-zinc-500">
-            proximosPasosInmediatos
-          </code>{" "}
-          si el taller acuerda otro orden o redacción.
+          Una vez consensuadas las decisiones anteriores, conviene priorizar estas acciones en el corto plazo y asignar responsable y fecha.
         </p>
         <ol className="mt-5 space-y-3">
           {proximosPasosInmediatos.map((p, i) => (
@@ -110,7 +106,7 @@ export function SummarySection() {
           className="bg-emerald-600 hover:bg-emerald-500"
           onClick={() => scrollToId("budget")}
         >
-          Revisar budget
+          Revisar inversión
         </Button>
       </div>
 

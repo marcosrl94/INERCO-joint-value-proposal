@@ -12,8 +12,8 @@ interface EditableNoteProps {
 
 export function EditableNote({
   sectionId,
-  label = "Notas de sala (editable)",
-  placeholder = "Captura acuerdos, dudas abiertas o próximos pasos…",
+  label = "Notas del equipo",
+  placeholder = "Acuerdos, riesgos abiertos o próximos pasos…",
   className,
 }: EditableNoteProps) {
   const storageKey = `workshop-nfq-inerco-${sectionId}`;

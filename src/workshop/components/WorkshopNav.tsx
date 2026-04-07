@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { id: "servicios", label: "Servicios" },
-  { id: "clientes", label: "Clientes y sectores" },
-  { id: "activos", label: "Activos / PoCs" },
-  { id: "gtm", label: "Go-to-market" },
-  { id: "budget", label: "Budget & People" },
+  { id: "servicios", label: "Oferta" },
+  { id: "clientes", label: "Mercado" },
+  { id: "activos", label: "Activos" },
+  { id: "gtm", label: "Comercial" },
+  { id: "budget", label: "Inversión" },
 ] as const;
 
 function scrollToId(id: string) {
@@ -47,7 +47,7 @@ export function WorkshopNav() {
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-emerald-500/90 shadow-[0_0_12px_rgba(16,185,129,0.5)]" />
           <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-            Workshop en vivo
+            NFQ × INERCO
           </span>
         </div>
         <nav
