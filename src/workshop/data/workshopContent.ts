@@ -5,6 +5,14 @@
 
 import type { CapacityBand } from "@/workshop/data/serviceCapacity";
 
+/** Pieza desagregada de la propuesta de valor conjunta (priorización en pestaña Desglose) */
+export interface ValuePropPiece {
+  id: string;
+  label: string;
+  /** Contexto breve para la sala */
+  description?: string;
+}
+
 export interface ServiceLine {
   id: string;
   title: string;
@@ -33,6 +41,10 @@ export interface ServiceLine {
    * más allá del extracto genérico de la matriz PdV.
    */
   serviciosTipoConjuntos: string[];
+  /**
+   * Piezas de propuesta evaluables en sala (susceptibilidad de integrar en oferta conjunta).
+   */
+  valuePropPieces: ValuePropPiece[];
 }
 
 /** Identificador de horizonte — mismo id que `gtmHorizons` */
@@ -370,6 +382,40 @@ export const serviceLines: ServiceLine[] = [
       "Escenarios de descarbonización (ALQUID / sensibilidades) integrados en capex, payback y narrativa corporativa.",
       "Acompañamiento en planes directores de sostenibilidad con priorización por impacto en riesgo y cadena de valor.",
     ],
+    valuePropPieces: [
+      {
+        id: "nz-huella-op",
+        label: "Cálculo de huella operacional (Scope 1/2)",
+        description: "Inventarios, MRV y línea base operativa.",
+      },
+      {
+        id: "nz-s3-cats-1-14",
+        label: "Scope 3 · Categorías 1–14 (GHG Protocol)",
+        description:
+          "Bloque agregado: bienes y servicios adquiridos, bienes de capital, combustible y energía upstream, transporte y distribución up/downstream, residuos operativos, viajes y desplazamiento de empleados, arrendamientos, procesamiento y uso de productos vendidos, fin de vida, franquicias — una sola lectura de susceptibilidad para el conjunto.",
+      },
+      {
+        id: "nz-s3-cat-15",
+        label: "Scope 3 · Cat. 15 — Inversiones",
+        description:
+          "GHG Protocol: emisiones de inversiones y financiación (cartera, activos financieros, participadas).",
+      },
+      {
+        id: "nz-plan-transicion",
+        label: "Planes de transición",
+        description: "Escenarios, gobierno e hitos ejecutables.",
+      },
+      {
+        id: "nz-plan-descarb",
+        label: "Planes de descarbonización",
+        description: "Palancas técnicas, priorización y costes.",
+      },
+      {
+        id: "nz-tcfd",
+        label: "Reporting tipo TCFD / narrativa inversores",
+        description: "Materialidad, KPIs y conversación con mercado de capitales.",
+      },
+    ],
   },
   {
     id: "riesgo-fisico",
@@ -410,6 +456,33 @@ export const serviceLines: ServiceLine[] = [
       "Integración de capas LEAP / TNFD / cadena (agua, biodiversidad, EUDR) en un único marco de riesgo cuando el perímetro lo exige.",
       "Climate X (u otras fuentes) como capa analítica alineada a preguntas de dirección y supervisión.",
     ],
+    valuePropPieces: [
+      {
+        id: "rf-fisico",
+        label: "Exposición y escenarios físicos",
+        description: "Amenazas localizadas, daño y vulnerabilidad de activo.",
+      },
+      {
+        id: "rf-transicion",
+        label: "Riesgo de transición",
+        description: "Política, mercado, tecnología y coste implícito de carbono.",
+      },
+      {
+        id: "rf-stress",
+        label: "Stress testing y escenarios",
+        description: "Comités de riesgo, dirección y sensibilidades.",
+      },
+      {
+        id: "rf-materialidad",
+        label: "Materialidad financiera / IFRS S2",
+        description: "Traducción técnica a impacto en cuentas y gobierno.",
+      },
+      {
+        id: "rf-cadena",
+        label: "Capas cadena / LEAP / TNFD (perímetro ampliado)",
+        description: "Cuando el encaje exige agua, naturaleza o EUDR en el mismo marco.",
+      },
+    ],
   },
   {
     id: "biodiversidad",
@@ -448,6 +521,28 @@ export const serviceLines: ServiceLine[] = [
       "Due diligence de biodiversidad y cadena con traducción a riesgo, contratos y reporting.",
       "Preparación de revelaciones y gobierno de datos para integrar naturaleza en CSRD / criterios de inversión.",
       "EUDR y trazabilidad de suministro con evidencias técnicas auditables.",
+    ],
+    valuePropPieces: [
+      {
+        id: "bio-linea-base",
+        label: "Línea base e inventarios (TNFD / SBTN)",
+        description: "Dependencias, impactos y presiones desde activo y territorio.",
+      },
+      {
+        id: "bio-dd",
+        label: "Due diligence biodiversidad y cadena",
+        description: "Riesgo contractual, proveedores y evidencias.",
+      },
+      {
+        id: "bio-reporting",
+        label: "Reporting e integración en CSRD / inversión",
+        description: "Gobernanza corporativa e indicadores materiales.",
+      },
+      {
+        id: "bio-eudr",
+        label: "EUDR y trazabilidad",
+        description: "Georreferencia, masa crítica y controles.",
+      },
     ],
   },
   {
@@ -490,6 +585,33 @@ export const serviceLines: ServiceLine[] = [
       "Segunda opinión, marcos verdes y diálogo con inversores y supervisión apoyados en dato de planta.",
       "Cuando el encargo es de plataforma: data model ESG, integración ERP/riesgos y gobierno del dato.",
     ],
+    valuePropPieces: [
+      {
+        id: "sf-materialidad",
+        label: "Doble materialidad y perímetro ESRS",
+        description: "Diseño de alcance, stakeholders y matriz de temas.",
+      },
+      {
+        id: "sf-datos",
+        label: "Arquitectura de datos y controles (CSRD)",
+        description: "Lineage, workflows de cierre y preparación a assurance.",
+      },
+      {
+        id: "sf-memoria",
+        label: "Memoria / revelaciones y KPIs",
+        description: "Estructura de información no financiera auditables.",
+      },
+      {
+        id: "sf-ratings",
+        label: "Índices, ratings y diálogo inversores",
+        description: "DJSI, Sustainalytics, second party opinion donde aplique.",
+      },
+      {
+        id: "sf-plataforma",
+        label: "Plataforma / integración ERP–riesgos",
+        description: "Cuando el mandato es sistemas y gobierno del dato.",
+      },
+    ],
   },
   {
     id: "due-diligence",
@@ -529,10 +651,51 @@ export const serviceLines: ServiceLine[] = [
       "Coordinación legal–riesgo–sostenibilidad con un único hilo de evidencias auditables.",
       "Uso de DNSH evaluator (u otras herramientas) como capa de cribado coherente con la DD financiera.",
     ],
+    valuePropPieces: [
+      {
+        id: "dd-transaccional",
+        label: "ESG due diligence transaccional",
+        description: "Hallazgos técnicos + implicaciones financieras y contingencias.",
+      },
+      {
+        id: "dd-dnsh",
+        label: "DNSH y taxonomía UE",
+        description: "Elegibilidad, pruebas y checklist por actividad.",
+      },
+      {
+        id: "dd-obra",
+        label: "Evidencias de obra y operación",
+        description: "Permisos, estudios, seguimiento ambiental en data room.",
+      },
+      {
+        id: "dd-legal",
+        label: "Coordinación legal–riesgo–sostenibilidad",
+        description: "Un solo hilo de preguntas y documentación auditables.",
+      },
+    ],
   },
 ];
 
 /** Taxonomía sectorial compartida: mismos ids de macrosector en cuentas, campaña y GTM. */
+/** Geografías canónicas para cruce oferta × mercado (alineadas a `gtmHorizons[].paises`). */
+export interface MercadoGeografia {
+  id: string;
+  label: string;
+  /** Tramo GTM de referencia (solo lectura en UI) */
+  gtmHorizonHint?: string;
+}
+
+export const mercadoGeografias: MercadoGeografia[] = [
+  { id: "es-pt", label: "España y Portugal", gtmHorizonHint: "Tramos 1–2" },
+  { id: "mx-select", label: "México (select)", gtmHorizonHint: "Tramo 2" },
+  { id: "sur-europa", label: "Sur de Europa", gtmHorizonHint: "Tramo 3" },
+  {
+    id: "latam-select",
+    label: "Latam (select, partner local)",
+    gtmHorizonHint: "Tramo 3",
+  },
+];
+
 export const taxonomiaCompartida = {
   macrosectores:
     "Ocho macrosectores: Energía & utilities · Infra & ingeniería · Telco & digital · Retail & consumo · Inmobiliario · Salud & pharma · Turismo & movilidad · Industrial.",
@@ -1011,5 +1174,110 @@ export const proximosPasosInmediatos: { id: string; texto: string }[] = [
     id: "pipeline",
     texto:
       "Actualizar pipeline compartido (oportunidades, etapa, próxima acción) con fecha.",
+  },
+];
+
+export interface ProximoPasoPeriodoItem {
+  id: string;
+  texto: string;
+}
+
+export interface ProximoPasoPeriodo {
+  id: string;
+  titulo: string;
+  /** Ventana dentro de la hoja de ruta 60–90 días */
+  ventana: string;
+  objetivo: string;
+  items: ProximoPasoPeriodoItem[];
+}
+
+/** Hoja de ruta 60–90 días: entregables por ventana temporal (ajustable en datos) */
+export const proximosPasosPorPeriodo: ProximoPasoPeriodo[] = [
+  {
+    id: "p1-formalizar",
+    titulo: "Formalizar y arrancar",
+    ventana: "Días 0–14",
+    objetivo:
+      "Salida de reunión por escrito, gobierno del acuerdo y canal operativo compartido sin ambigüedades.",
+    items: [
+      {
+        id: "p1-acta",
+        texto:
+          "Publicar acta o resumen con decisiones explícitas, owner por tema y fecha de la primera revisión de seguimiento.",
+      },
+      {
+        id: "p1-comite",
+        texto:
+          "Fijar en calendario el comité conjunto: al menos las dos primeras fechas y orden del día tipo.",
+      },
+      {
+        id: "p1-pipeline",
+        texto:
+          "Definir herramienta y campos mínimos del pipeline compartido; nombrar responsable de mantenimiento semanal.",
+      },
+      {
+        id: "p1-legal",
+        texto:
+          "Si aplica: expediente legal/compliance abierto con checklist (datos, marca, IP) y fecha objetivo de cierre del checklist.",
+      },
+    ],
+  },
+  {
+    id: "p2-documentar",
+    titulo: "Documentar modelo y pilotos",
+    ventana: "Días 15–45",
+    objetivo:
+      "Modelo de colaboración y PoCs/cuentas piloto descritos con hitos verificables y mensaje comercial alineado.",
+    items: [
+      {
+        id: "p2-modelo",
+        texto:
+          "Documento único (breve) de modelo operativo y comercial: roles NFQ/INERCO, reparto, escalado y contactos por frente.",
+      },
+      {
+        id: "p2-pocs",
+        texto:
+          "Por cada PoC o cuenta piloto: alcance, entregable, fecha de hito de revisión y criterio de éxito medible.",
+      },
+      {
+        id: "p2-gtm",
+        texto:
+          "Lista priorizada de cuentas objetivo y mensaje compartido (one-pager o deck base) validado por ambas partes.",
+      },
+      {
+        id: "p2-budget",
+        texto:
+          "Cuadro de inversión vs. hitos actualizado; variaciones de alcance reflejadas con acuerdo explícito.",
+      },
+    ],
+  },
+  {
+    id: "p3-ejecutar",
+    titulo: "Ejecutar y decidir escala",
+    ventana: "Días 46–90",
+    objetivo:
+      "Resultados de pilotos evaluados, decisión de inversión/FTE para el siguiente ciclo y prioridades actualizadas.",
+    items: [
+      {
+        id: "p3-hitos",
+        texto:
+          "Ejecutar o cerrar formalmente cada hito de PoC con informe de resultado y decisión de siguiente paso (ampliar, iterar o parar).",
+      },
+      {
+        id: "p3-inversion",
+        texto:
+          "Revisión formal de inversión y plantilla FTE frente a pipeline y entregas: decisión go/no-go a escala documentada.",
+      },
+      {
+        id: "p3-portfolio",
+        texto:
+          "Actualizar portfolio y prioridades de líneas/sectores para el siguiente trimestre, con registro en acta o anexo.",
+      },
+      {
+        id: "p3-partners",
+        texto:
+          "Acordar si se activan partners o refuerzos de equipo, con umbral de activación y responsable por parte.",
+      },
+    ],
   },
 ];

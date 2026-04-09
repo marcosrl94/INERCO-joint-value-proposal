@@ -13,7 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { assetPocs } from "@/workshop/data/workshopContent";
+import { assetPocs, serviceLines } from "@/workshop/data/workshopContent";
+import { useWorkshopSession } from "@/workshop/hooks/useWorkshopSession";
+import { compositeScore } from "@/workshop/state/workshopSession";
+import { Badge } from "@/components/ui/badge";
 import { SectionShell } from "@/workshop/components/SectionShell";
 import { EditableNote } from "@/workshop/components/EditableNote";
 import { cn } from "@/lib/utils";
@@ -27,6 +30,56 @@ import {
   Timer,
   Users,
 } from "lucide-react";
+
+/** Misma orden y colores que `PortfolioMatrix` y la leyenda de priorización */
+const SERVICE_LINE_PALETTE = [
+  "bg-emerald-500/90",
+  "bg-sky-500/90",
+  "bg-violet-500/90",
+  "bg-amber-500/90",
+  "bg-rose-500/85",
+  "bg-cyan-500/85",
+  "bg-fuchsia-500/80",
+  "bg-lime-500/85",
+] as const;
+
+function assetLinkedServiceLineId(assetId: string): string | null {
+  if (assetId === "alquid") return "net-zero";
+  if (assetId === "riesgo") return "riesgo-fisico";
+  if (assetId === "csrd") return "sustainable-finance";
+  return null;
+}
+
+function lineBadgeForAssetId(assetId: string): {
+  catalogNumber: number;
+  dotClass: string;
+} | null {
+  const lineId = assetLinkedServiceLineId(assetId);
+  if (!lineId) return null;
+  const idx = serviceLines.findIndex((s) => s.id === lineId);
+  if (idx < 0) return null;
+  return {
+    catalogNumber: idx + 1,
+    dotClass: SERVICE_LINE_PALETTE[idx % SERVICE_LINE_PALETTE.length],
+  };
+}
+
+function PortfolioLineBadge({ assetId }: { assetId: string }) {
+  const badge = lineBadgeForAssetId(assetId);
+  if (!badge) return null;
+  return (
+    <span
+      className={cn(
+        "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md ring-2 ring-zinc-950",
+        badge.dotClass
+      )}
+      aria-label={`Línea de oferta ${badge.catalogNumber} del portfolio`}
+      title={`Encaje con línea de oferta ${badge.catalogNumber} (Priorización)`}
+    >
+      {badge.catalogNumber}
+    </span>
+  );
+}
 
 function ReferenciaLogo({ alt, logoUrl }: { alt: string; logoUrl?: string }) {
   const [ok, setOk] = useState(!!logoUrl);
@@ -50,13 +103,24 @@ function ReferenciaLogo({ alt, logoUrl }: { alt: string; logoUrl?: string }) {
 }
 
 export function AssetsSection() {
+  const { session } = useWorkshopSession();
   const [selectedId, setSelectedId] = useState(assetPocs[0].id);
   const selected = assetPocs.find((a) => a.id === selectedId) ?? assetPocs[0];
+  const linkedLineId = assetLinkedServiceLineId(selected.id);
+  const linkedLine = linkedLineId
+    ? serviceLines.find((s) => s.id === linkedLineId)
+    : undefined;
+  const linkedScore = linkedLineId
+    ? session.scoresByServiceLine[linkedLineId]
+    : undefined;
+  const linkedComposite =
+    linkedScore != null ? compositeScore(linkedScore) : null;
 
   return (
     <SectionShell
       id="activos"
-      eyebrow="03 · Activos"
+      slideIndex={3}
+      eyebrow="04 · Activos"
       title="Activos y pruebas de concepto"
       description="Tres líneas de producto o prototipo priorizables en la colaboración. Cada ficha resume alcance, esfuerzo e industrialización; el bloque inferior sirve para acuerdos y próximos pasos."
     >
@@ -78,7 +142,10 @@ export function AssetsSection() {
           <SelectContent className="border-zinc-700 bg-zinc-950">
             {assetPocs.map((a) => (
               <SelectItem key={a.id} value={a.id} className="text-sm">
-                {a.title}
+                <span className="flex items-center gap-2.5">
+                  <PortfolioLineBadge assetId={a.id} />
+                  <span className="min-w-0">{a.title}</span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -102,13 +169,14 @@ export function AssetsSection() {
                     type="button"
                     onClick={() => setSelectedId(a.id)}
                     className={cn(
-                      "w-full rounded-r-lg border border-transparent py-2.5 pl-3 pr-2 text-left text-sm leading-snug transition-colors",
+                      "flex w-full items-center gap-2.5 rounded-r-lg border border-transparent py-2.5 pl-3 pr-2 text-left text-sm leading-snug transition-colors",
                       on
                         ? "border-sky-500/30 bg-sky-500/10 font-medium text-sky-100 shadow-[inset_3px_0_0_0_rgba(56,189,248,0.85)]"
                         : "text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200"
                     )}
                   >
-                    {a.title}
+                    <PortfolioLineBadge assetId={a.id} />
+                    <span className="min-w-0">{a.title}</span>
                   </button>
                 </li>
               );
@@ -122,9 +190,23 @@ export function AssetsSection() {
               <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 md:text-xs">
                 {selected.subtitle}
               </p>
-              <CardTitle className="text-xl font-semibold leading-snug text-zinc-100 sm:text-2xl md:text-3xl md:leading-tight">
-                {selected.title}
-              </CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <PortfolioLineBadge assetId={selected.id} />
+                  <CardTitle className="text-xl font-semibold leading-snug text-zinc-100 sm:text-2xl md:text-3xl md:leading-tight">
+                    {selected.title}
+                  </CardTitle>
+                </div>
+                {linkedLine && linkedComposite != null && linkedComposite >= 4 ? (
+                  <Badge
+                    variant="outline"
+                    className="w-fit shrink-0 border-emerald-500/35 text-[11px] font-normal text-emerald-200/90"
+                    title="Media madurez+relevancia en Priorización para la línea de oferta asociada"
+                  >
+                    Sesión: {linkedLine.title} ({linkedComposite.toFixed(1)})
+                  </Badge>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-6 px-5 pb-8 pt-6 text-sm text-zinc-400 sm:px-8 md:gap-8 md:text-base">
               {selected.previewProducto ? (

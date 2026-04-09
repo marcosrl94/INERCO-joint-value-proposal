@@ -1,10 +1,13 @@
 import {
   campaignCorporatesFy2026,
   gtmHorizons,
+  mercadoGeografias,
   sectorReachFy2026,
+  serviceLines,
   taxonomiaCompartida,
   type LlegadaNivel,
 } from "@/workshop/data/workshopContent";
+import { useWorkshopSession } from "@/workshop/hooks/useWorkshopSession";
 import { SectionShell } from "@/workshop/components/SectionShell";
 import { EditableNote } from "@/workshop/components/EditableNote";
 import { Badge } from "@/components/ui/badge";
@@ -45,15 +48,38 @@ const llegadaCopy: Record<
 };
 
 export function GtmSection() {
+  const { session } = useWorkshopSession();
+  const geoSession = mercadoGeografias.filter((g) =>
+    serviceLines.some(
+      (s) => (session.fitByServiceAndGeo[s.id]?.[g.id] ?? 0) >= 2
+    )
+  );
+
   return (
     <SectionShell
       id="gtm"
-      eyebrow="04 · Comercial"
-      title="Plan comercial y priorización temporal"
-      description="Campaña agregada por segmento, calendario por tramos (FY27 desde sep. 2026; jul. 2026 como arranque más pronto) y acciones comerciales asociadas."
+      slideIndex={4}
+      eyebrow="05 · Comercial"
+      title="Plan comercial y calendario GTM"
+      description="Desde aquí arranca el bloque de comercial y despliegue (campaña por segmento, ventanas por tramo con FY27 desde sep. 2026 y jul. 2026 como arranque más pronto, acciones de venta y cuenta). Lo anterior — oferta, priorización, cartera y activos — alimenta la conversación; no sustituye este plan GTM."
     >
+      {geoSession.length > 0 ? (
+        <div className="mb-8 rounded-xl border border-sky-500/20 bg-sky-500/[0.06] p-4 text-xs leading-relaxed text-zinc-400">
+          <p className="font-medium text-sky-200/90">
+            Lectura comercial desde sala (cruce oferta × geografía)
+          </p>
+          <p className="mt-2">
+            Hay marcado encaje medio alto (≥2) en:{" "}
+            <span className="text-zinc-300">
+              {geoSession.map((g) => g.label).join(" · ")}
+            </span>
+            . Coherente con el foco por tramos de los horizontes siguientes.
+          </p>
+        </div>
+      ) : null}
+
       <div className="mb-8 rounded-xl border border-zinc-800/80 bg-zinc-950/50 p-4 text-xs leading-relaxed text-zinc-500">
-        <p className="font-medium text-zinc-400">Priorización por segmento y tramo</p>
+        <p className="font-medium text-zinc-400">Segmentación comercial por tramo</p>
         <p className="mt-2">{taxonomiaCompartida.macrosectores}</p>
         <p className="mt-2">
           <span className="text-zinc-600">0–6 meses · </span>
@@ -176,15 +202,16 @@ export function GtmSection() {
         </p>
       </div>
 
-      {/* Línea temporal vertical + referencia a años naturales */}
+      {/* Calendario comercial GTM — no confundir con priorización de activos */}
       <div className="relative">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               <CalendarRange className="size-3.5 text-emerald-500/90" />
-              Línea temporal (priorización)
+              Calendario comercial (GTM)
             </p>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-zinc-400">
+              Marco para despliegue comercial y cuenta — no la priorización de activos/PoC.
               Referencia principal: <span className="text-zinc-300">inicio FY27 en sep. 2026</span>.
               Arranque más pronto posible: <span className="text-zinc-300">jul. 2026</span> (adelanta
               cada ventana ~dos meses).

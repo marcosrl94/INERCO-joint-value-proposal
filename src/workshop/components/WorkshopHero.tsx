@@ -1,13 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { workshopMeta } from "@/workshop/data/workshopContent";
-import { ArrowRight, ClipboardList, Sparkles } from "lucide-react";
+import { scrollToWorkshopBlock } from "@/workshop/lib/scrollToWorkshopBlock";
+import { ArrowRight, ClipboardList, Keyboard, Sparkles } from "lucide-react";
 
 const NFQ_LOGO = "/branding/nfq-logo.png";
 const INERCO_LOGO = "/branding/inerco-logo.png";
-
-function scrollToId(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 interface WorkshopHeroProps {
   onExecutiveSummary: () => void;
@@ -47,7 +44,7 @@ export function WorkshopHero({ onExecutiveSummary }: WorkshopHeroProps) {
               <Button
                 size="lg"
                 className="h-11 gap-2 bg-emerald-600 text-white hover:bg-emerald-500"
-                onClick={() => scrollToId("servicios")}
+                onClick={() => scrollToWorkshopBlock("servicios")}
               >
                 Ver la propuesta
                 <ArrowRight className="size-4" />
@@ -62,6 +59,19 @@ export function WorkshopHero({ onExecutiveSummary }: WorkshopHeroProps) {
                 Ver resumen ejecutivo
               </Button>
             </div>
+            <p className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-zinc-600">
+              <Keyboard className="size-3 shrink-0 text-zinc-500" aria-hidden />
+              <span>
+                Flechas del teclado o barra inferior para avanzar entre bloques ·{" "}
+                <kbd className="rounded border border-zinc-700 bg-zinc-900 px-1 py-0.5 font-mono text-[9px] text-zinc-400">
+                  Inicio
+                </kbd>{" "}
+                /{" "}
+                <kbd className="rounded border border-zinc-700 bg-zinc-900 px-1 py-0.5 font-mono text-[9px] text-zinc-400">
+                  Fin
+                </kbd>
+              </span>
+            </p>
           </div>
 
           {/* Columna lateral — INERCO protagonista + NFQ (arriba en móvil, a la derecha en desktop) */}

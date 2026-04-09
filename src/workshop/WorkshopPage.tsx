@@ -3,23 +3,27 @@ import { WorkshopNav } from "@/workshop/components/WorkshopNav";
 import { WorkshopHero } from "@/workshop/components/WorkshopHero";
 import { ExecutiveSummaryDialog } from "@/workshop/components/ExecutiveSummaryDialog";
 import { ServicesSection } from "@/workshop/components/ServicesSection";
+import { PrioritizationSection } from "@/workshop/components/PrioritizationSection";
 import { ClientsSection } from "@/workshop/components/ClientsSection";
 import { AssetsSection } from "@/workshop/components/AssetsSection";
 import { GtmSection } from "@/workshop/components/GtmSection";
 import { BudgetSection } from "@/workshop/components/BudgetSection";
 import { SummarySection } from "@/workshop/components/SummarySection";
+import { WorkshopSessionProvider } from "@/workshop/context/WorkshopSessionContext";
 import { workshopMeta } from "@/workshop/data/workshopContent";
 
 export function WorkshopPage() {
   const [execOpen, setExecOpen] = useState(false);
 
   return (
+    <WorkshopSessionProvider>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
       <ExecutiveSummaryDialog open={execOpen} onOpenChange={setExecOpen} />
       <WorkshopNav />
       <main>
         <WorkshopHero onExecutiveSummary={() => setExecOpen(true)} />
         <ServicesSection />
+        <PrioritizationSection />
         <ClientsSection />
         <AssetsSection />
         <GtmSection />
@@ -38,5 +42,6 @@ export function WorkshopPage() {
         </div>
       </footer>
     </div>
+    </WorkshopSessionProvider>
   );
 }

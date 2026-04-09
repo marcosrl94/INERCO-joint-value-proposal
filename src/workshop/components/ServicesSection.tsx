@@ -15,11 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  pdvServiciosModelo,
-  serviceLines,
-  type PdvServicioRow,
-} from "@/workshop/data/workshopContent";
+import { serviceLines } from "@/workshop/data/workshopContent";
+import { PdvRowEmbed, pdvRowsFor } from "@/workshop/components/PdvRowEmbed";
 import { getJointCapacityReadout } from "@/workshop/data/serviceCapacity";
 import {
   CapacityMiniChips,
@@ -33,80 +30,31 @@ import {
   Building2,
   ChevronDown,
   ClipboardList,
-  Cpu,
   FileSearch,
   Handshake,
   LayoutList,
   Network,
   Sparkles,
-  Table2,
 } from "lucide-react";
 
-function pdvRowsFor(ids: string[]): PdvServicioRow[] {
-  return ids
-    .map((id) => pdvServiciosModelo.find((r) => r.id === id))
-    .filter((r): r is PdvServicioRow => r != null);
-}
-
-function PdvRowEmbed({ rows }: { rows: PdvServicioRow[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <div className="overflow-hidden rounded-lg border border-violet-500/20 bg-violet-500/[0.04]">
-      <p className="flex items-center gap-2 border-b border-violet-500/15 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-violet-300/90 md:px-4 md:py-3">
-        <Table2 className="size-3.5 shrink-0" aria-hidden />
-        Roles conjuntos por servicio (extracto)
-      </p>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px] border-collapse text-left text-xs md:min-w-0 md:text-sm">
-          <thead>
-            <tr className="border-b border-zinc-800/90 bg-zinc-950/80 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 md:text-[11px]">
-              <th className="px-3 py-2.5 align-bottom md:px-4 md:py-3">Core</th>
-              <th className="px-3 py-2.5 align-bottom text-emerald-400/85 md:px-4 md:py-3">
-                INERCO
-              </th>
-              <th className="px-3 py-2.5 align-bottom text-sky-400/85 md:px-4 md:py-3">
-                NFQ
-              </th>
-              <th className="px-3 py-2.5 align-bottom text-zinc-500 md:px-4 md:py-3">
-                Herramienta
-              </th>
-            </tr>
-          </thead>
-          <tbody className="text-zinc-300">
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-zinc-800/60 last:border-0"
-              >
-                <td className="align-top px-3 py-3 font-medium text-zinc-200 md:px-4 md:py-3.5">
-                  {row.core}
-                </td>
-                <td className="align-top px-3 py-3 leading-relaxed text-zinc-400 md:px-4 md:py-3.5">
-                  {row.servicioInerco}
-                </td>
-                <td className="align-top px-3 py-3 leading-relaxed text-zinc-400 md:px-4 md:py-3.5">
-                  {row.servicioNfq}
-                </td>
-                <td className="align-top px-3 py-3 text-zinc-500 md:px-4 md:py-3.5">
-                  <span className="inline-flex items-center gap-1">
-                    <Cpu className="size-3 shrink-0 text-zinc-600" aria-hidden />
-                    {row.activoDigital ?? "—"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
+const FOCUS_SERVICE_EVENT = "workshop-focus-service";
 
 export function ServicesSection() {
   const [selectedId, setSelectedId] = useState(serviceLines[0].id);
   const [detailOpen, setDetailOpen] = useState(false);
 
   const selected = serviceLines.find((s) => s.id === selectedId) ?? serviceLines[0];
+
+  useEffect(() => {
+    const onFocus = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      if (typeof id === "string" && serviceLines.some((s) => s.id === id)) {
+        setSelectedId(id);
+      }
+    };
+    window.addEventListener(FOCUS_SERVICE_EVENT, onFocus);
+    return () => window.removeEventListener(FOCUS_SERVICE_EVENT, onFocus);
+  }, []);
 
   useEffect(() => {
     setDetailOpen(false);
@@ -121,6 +69,7 @@ export function ServicesSection() {
   return (
     <SectionShell
       id="servicios"
+      slideIndex={0}
       eyebrow="01 · Oferta"
       title="Líneas de servicio conjunto"
       description="Seleccione una dimensión para ver propuesta conjunta, reparto INERCO/NFQ, extracto de la matriz de roles y el detalle desplegable. Las etiquetas de capacidad indican dónde cada parte aporta más peso relativo en esa línea."
@@ -189,7 +138,10 @@ export function ServicesSection() {
         </nav>
 
         {/* Ficha única — ancho completo del panel */}
-        <div className="min-w-0 flex-1">
+        <div
+          className="min-w-0 flex-1 scroll-mt-32"
+          id={`service-line-${selected.id}`}
+        >
           <Card className="border-zinc-800/90 bg-zinc-900/35 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
             <CardHeader className="gap-4 px-5 pb-2 pt-6 sm:px-8 sm:pt-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">

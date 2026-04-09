@@ -18,24 +18,27 @@ export function EditableNote({
 }: EditableNoteProps) {
   const storageKey = `workshop-nfq-inerco-${sectionId}`;
   const [value, setValue] = useState("");
+  const [hydrated, setHydrated] = useState(false);
   const id = useId();
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) setValue(saved);
+      if (saved != null) setValue(saved);
     } catch {
       /* ignore */
     }
+    setHydrated(true);
   }, [storageKey]);
 
   useEffect(() => {
+    if (!hydrated) return;
     try {
       localStorage.setItem(storageKey, value);
     } catch {
       /* ignore */
     }
-  }, [storageKey, value]);
+  }, [storageKey, value, hydrated]);
 
   return (
     <div

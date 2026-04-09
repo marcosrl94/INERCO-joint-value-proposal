@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { executiveSummaryBullets, workshopMeta } from "@/workshop/data/workshopContent";
+import { scrollToWorkshopBlock } from "@/workshop/lib/scrollToWorkshopBlock";
 import { ListChecks } from "lucide-react";
 
 interface ExecutiveSummaryDialogProps {
@@ -21,10 +22,7 @@ export function ExecutiveSummaryDialog({
   const goToDecisions = () => {
     onOpenChange(false);
     requestAnimationFrame(() => {
-      document.getElementById("resumen")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      scrollToWorkshopBlock("resumen");
     });
   };
 

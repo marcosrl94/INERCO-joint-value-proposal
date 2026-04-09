@@ -12,8 +12,10 @@ import {
   clientsVsGtmCopy,
   primerosLeads,
   sectorReachFy2026,
+  serviceLines,
   taxonomiaCompartida,
 } from "@/workshop/data/workshopContent";
+import { useWorkshopSession } from "@/workshop/hooks/useWorkshopSession";
 import type { LlegadaNivel } from "@/workshop/data/workshopContent";
 import { SectionShell } from "@/workshop/components/SectionShell";
 import { EditableNote } from "@/workshop/components/EditableNote";
@@ -76,6 +78,7 @@ function FitBadge({ fit }: { fit: "alto" | "medio" | "explorar" }) {
 }
 
 export function ClientsSection() {
+  const { session } = useWorkshopSession();
   const byCluster = useMemo(reachMap, []);
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(sectorReachFy2026.map((s) => s.id))
@@ -117,7 +120,8 @@ export function ClientsSection() {
   return (
     <SectionShell
       id="clientes"
-      eyebrow="02 · Mercado"
+      slideIndex={2}
+      eyebrow="03 · Mercado"
       title="Cartera y segmentos objetivo"
       description={clientsVsGtmCopy.bloque2rol}
     >
@@ -236,6 +240,11 @@ export function ClientsSection() {
           {filteredClients.map((row) => {
             const cluster = byCluster[row.sectorClusterId];
             const open = openFichas.has(row.id);
+            const sessionPrioridad = serviceLines.filter((s) => {
+              const v =
+                session.fitByServiceAndSector[s.id]?.[row.sectorClusterId] ?? 0;
+              return v >= 2;
+            });
             return (
               <li
                 key={row.id}
@@ -246,6 +255,16 @@ export function ClientsSection() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-medium text-zinc-100">{row.cliente}</h4>
                       <FitBadge fit={row.fitComercial} />
+                      {sessionPrioridad.length > 0 ? (
+                        <Badge
+                          variant="outline"
+                          className="max-w-full border-emerald-500/35 text-[10px] font-normal leading-tight text-emerald-200/90"
+                          title="Líneas de oferta marcadas con encaje ≥2 en Priorización para este macrosector"
+                        >
+                          Sesión:{" "}
+                          {sessionPrioridad.map((s) => s.title).join(" · ")}
+                        </Badge>
+                      ) : null}
                     </div>
                     <p className="text-xs leading-relaxed text-sky-300/85">
                       {row.gtmPuenteCuenta}

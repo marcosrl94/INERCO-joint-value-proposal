@@ -43,7 +43,8 @@ export function BudgetSection() {
   return (
     <SectionShell
       id="budget"
-      eyebrow="05 · Inversión"
+      slideIndex={5}
+      eyebrow="06 · Inversión"
       title="Inversión y capacidad"
       description="Coste de personas año 1 por parte, escenarios de volumen de proyectos e ingresos conjuntos FY27–FY29 según ticket medio por dimensión. Cifras orientativas para debate; conviene validar supuestos con finanzas de cada parte."
     >

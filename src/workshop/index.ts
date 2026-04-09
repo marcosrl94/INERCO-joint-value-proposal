@@ -6,6 +6,8 @@ export { WorkshopNav } from "./components/WorkshopNav";
 export { WorkshopHero } from "./components/WorkshopHero";
 export { ExecutiveSummaryDialog } from "./components/ExecutiveSummaryDialog";
 export { ServicesSection } from "./components/ServicesSection";
+export { PrioritizationSection } from "./components/PrioritizationSection";
+export { WorkshopSessionProvider } from "./context/WorkshopSessionContext";
 export { ClientsSection } from "./components/ClientsSection";
 export { AssetsSection } from "./components/AssetsSection";
 export { GtmSection } from "./components/GtmSection";

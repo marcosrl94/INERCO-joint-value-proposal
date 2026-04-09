@@ -8,6 +8,7 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  onValueChange,
   ...props
 }: SliderPrimitive.Root.Props) {
   const _values = Array.isArray(value)
@@ -26,6 +27,14 @@ function Slider({
       max={max}
       thumbAlignment="edge"
       {...props}
+      onValueChange={
+        onValueChange
+          ? (newValue, details) => {
+              const normalized = Array.isArray(newValue) ? newValue : [newValue]
+              onValueChange(normalized, details)
+            }
+          : undefined
+      }
     >
       <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
         <SliderPrimitive.Track
