@@ -1,4 +1,6 @@
 import {
+  budgetDimensionesIngreso,
+  budgetEscenariosProyectos,
   decisionTags,
   mercadoGeografias,
   pdvServiciosModelo,
@@ -30,6 +32,136 @@ export interface LineScore {
 /** Por línea de oferta: id de pieza → susceptibilidad 0–3 */
 export type SusceptibilityByServiceLine = Record<string, Record<string, number>>;
 
+export interface BudgetPartePersonas {
+  fte: number | null;
+  costeMedioK: number | null;
+}
+
+export interface BudgetIngresosEscenarioRow {
+  fy27: number | null;
+  fy28: number | null;
+  fy29: number | null;
+}
+
+/** Valores de presupuesto capturados en sesión (null = sin rellenar) */
+export interface BudgetSessionFields {
+  nfq: BudgetPartePersonas;
+  inerco: BudgetPartePersonas;
+  /** k€/FTE·año — regla para derivar FTE implícito desde ingresos */
+  facturacionPorFteK: number | null;
+  /** k€ — referencia opcional para el mix de dimensiones */
+  ticketMedioPonderadoK: number | null;
+  ticketsPorDimension: Record<string, number | null>;
+  ingresosPorEscenario: Record<string, BudgetIngresosEscenarioRow>;
+}
+
+const BUDGET_NUM_MAX = 1e9;
+
+export function clampBudgetNumber(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(BUDGET_NUM_MAX, Math.max(0, n));
+}
+
+export function createEmptyBudgetFields(): BudgetSessionFields {
+  const ticketsPorDimension: Record<string, number | null> =
+    Object.fromEntries(budgetDimensionesIngreso.map((d) => [d.id, null]));
+  const ingresosPorEscenario: Record<string, BudgetIngresosEscenarioRow> =
+    Object.fromEntries(
+      budgetEscenariosProyectos.map((s) => [
+        s.id,
+        { fy27: null, fy28: null, fy29: null },
+      ])
+    );
+  return {
+    nfq: { fte: null, costeMedioK: null },
+    inerco: { fte: null, costeMedioK: null },
+    facturacionPorFteK: null,
+    ticketMedioPonderadoK: null,
+    ticketsPorDimension,
+    ingresosPorEscenario,
+  };
+}
+
+function parseNullableBudgetNumber(v: unknown): number | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number" && Number.isFinite(v)) return clampBudgetNumber(v);
+  return null;
+}
+
+function parseBudgetParte(
+  raw: unknown,
+  fallback: BudgetPartePersonas
+): BudgetPartePersonas {
+  if (!isRecord(raw)) return { ...fallback };
+  return {
+    fte: "fte" in raw ? parseNullableBudgetNumber(raw.fte) : fallback.fte,
+    costeMedioK:
+      "costeMedioK" in raw
+        ? parseNullableBudgetNumber(raw.costeMedioK)
+        : fallback.costeMedioK,
+  };
+}
+
+function mergeBudgetSession(raw: unknown): BudgetSessionFields {
+  const base = createEmptyBudgetFields();
+  if (!isRecord(raw)) return base;
+  const out: BudgetSessionFields = {
+    ...base,
+    nfq: parseBudgetParte(raw.nfq, base.nfq),
+    inerco: parseBudgetParte(raw.inerco, base.inerco),
+    facturacionPorFteK:
+      "facturacionPorFteK" in raw
+        ? parseNullableBudgetNumber(raw.facturacionPorFteK)
+        : base.facturacionPorFteK,
+    ticketMedioPonderadoK:
+      "ticketMedioPonderadoK" in raw
+        ? parseNullableBudgetNumber(raw.ticketMedioPonderadoK)
+        : base.ticketMedioPonderadoK,
+    ticketsPorDimension: { ...base.ticketsPorDimension },
+    ingresosPorEscenario: { ...base.ingresosPorEscenario },
+  };
+  if (isRecord(raw.ticketsPorDimension)) {
+    for (const d of budgetDimensionesIngreso) {
+      if (d.id in raw.ticketsPorDimension) {
+        out.ticketsPorDimension[d.id] = parseNullableBudgetNumber(
+          raw.ticketsPorDimension[d.id]
+        );
+      }
+    }
+  }
+  if (isRecord(raw.ingresosPorEscenario)) {
+    for (const s of budgetEscenariosProyectos) {
+      const row = raw.ingresosPorEscenario[s.id];
+      if (!isRecord(row)) continue;
+      const baseRow = out.ingresosPorEscenario[s.id];
+      out.ingresosPorEscenario[s.id] = {
+        fy27: "fy27" in row ? parseNullableBudgetNumber(row.fy27) : baseRow.fy27,
+        fy28: "fy28" in row ? parseNullableBudgetNumber(row.fy28) : baseRow.fy28,
+        fy29: "fy29" in row ? parseNullableBudgetNumber(row.fy29) : baseRow.fy29,
+      };
+    }
+  }
+  return out;
+}
+
+export function budgetSessionHasAnyValue(budget: BudgetSessionFields): boolean {
+  const parts = [budget.nfq, budget.inerco];
+  for (const p of parts) {
+    if (p.fte != null || p.costeMedioK != null) return true;
+  }
+  if (budget.facturacionPorFteK != null || budget.ticketMedioPonderadoK != null)
+    return true;
+  for (const id of Object.keys(budget.ticketsPorDimension)) {
+    if (budget.ticketsPorDimension[id] != null) return true;
+  }
+  for (const s of budgetEscenariosProyectos) {
+    const r = budget.ingresosPorEscenario[s.id];
+    if (!r) continue;
+    if (r.fy27 != null || r.fy28 != null || r.fy29 != null) return true;
+  }
+  return false;
+}
+
 export type WorkshopSessionV1 = {
   version: 1;
   decisions: Record<string, string>;
@@ -38,6 +170,7 @@ export type WorkshopSessionV1 = {
   susceptibilityByServiceLine: SusceptibilityByServiceLine;
   fitByServiceAndSector: Record<string, Record<string, number>>;
   fitByServiceAndGeo: Record<string, Record<string, number>>;
+  budget: BudgetSessionFields;
 };
 
 function defaultDecisions(): Record<string, string> {
@@ -76,6 +209,7 @@ export function createDefaultSession(): WorkshopSessionV1 {
     susceptibilityByServiceLine: defaultSusceptibilityByServiceLine(),
     fitByServiceAndSector: {},
     fitByServiceAndGeo: {},
+    budget: createEmptyBudgetFields(),
   };
 }
 
@@ -180,6 +314,8 @@ export function normalizeSession(raw: unknown): WorkshopSessionV1 {
     }
   }
 
+  out.budget = mergeBudgetSession(raw.budget);
+
   return out;
 }
 
@@ -261,6 +397,55 @@ export function buildExportMarkdown(
     lines.push(`- **${d.label}:** ${session.decisions[d.id] ?? d.defaultValue}`);
   }
   lines.push("");
+  lines.push("## Inversión y capacidad (valores de sesión)");
+  lines.push("");
+  if (!budgetSessionHasAnyValue(session.budget)) {
+    lines.push("*Pendiente de completar en sesión.*");
+    lines.push("");
+  } else {
+    const b = session.budget;
+    lines.push("### Personas (k€ = FTE × coste medio k€/FTE·año)");
+    lines.push("");
+    lines.push("| Parte | FTE | Coste medio (k€/FTE·año) | Inversión (k€) |");
+    lines.push("| --- | ---: | ---: | ---: |");
+    const fmt = (n: number | null) =>
+      n != null && Number.isFinite(n) ? String(Math.round(n * 100) / 100) : "—";
+    const inv = (fte: number | null, c: number | null) =>
+      fte != null && c != null ? Math.round(fte * c) : null;
+    lines.push(
+      `| NFQ | ${fmt(b.nfq.fte)} | ${fmt(b.nfq.costeMedioK)} | ${fmt(inv(b.nfq.fte, b.nfq.costeMedioK))} |`
+    );
+    lines.push(
+      `| INERCO | ${fmt(b.inerco.fte)} | ${fmt(b.inerco.costeMedioK)} | ${fmt(inv(b.inerco.fte, b.inerco.costeMedioK))} |`
+    );
+    lines.push("");
+    lines.push(
+      `- **Facturación referencia / FTE (k€/FTE·año):** ${fmt(b.facturacionPorFteK)}`
+    );
+    lines.push(
+      `- **Ticket medio ponderado (k€, opcional):** ${fmt(b.ticketMedioPonderadoK)}`
+    );
+    lines.push("");
+    lines.push("### Ticket medio por dimensión (k€)");
+    lines.push("");
+    lines.push("| Dimensión | Ticket (k€) |");
+    lines.push("| --- | ---: |");
+    for (const d of budgetDimensionesIngreso) {
+      lines.push(`| ${d.nombre} | ${fmt(b.ticketsPorDimension[d.id])} |`);
+    }
+    lines.push("");
+    lines.push("### Ingresos anuales estimados por escenario (k€)");
+    lines.push("");
+    lines.push("| Escenario | FY27 | FY28 | FY29 |");
+    lines.push("| --- | ---: | ---: | ---: |");
+    for (const s of budgetEscenariosProyectos) {
+      const row = b.ingresosPorEscenario[s.id];
+      lines.push(
+        `| ${s.etiqueta} | ${fmt(row?.fy27 ?? null)} | ${fmt(row?.fy28 ?? null)} | ${fmt(row?.fy29 ?? null)} |`
+      );
+    }
+    lines.push("");
+  }
   lines.push("## Próximos pasos inmediatos");
   lines.push("");
   for (const p of proximosPasosInmediatos) {

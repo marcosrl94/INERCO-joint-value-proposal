@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  clampBudgetNumber,
   createDefaultSession,
   loadSession,
   saveSession,
@@ -39,6 +40,19 @@ export type WorkshopSessionApi = {
     serviceId: string,
     pieceId: string,
     value: number
+  ) => void;
+  setBudgetPersonas: (
+    part: "nfq" | "inerco",
+    field: "fte" | "costeMedioK",
+    value: number | null
+  ) => void;
+  setBudgetFacturacionPorFteK: (value: number | null) => void;
+  setBudgetTicketMedioPonderadoK: (value: number | null) => void;
+  setBudgetDimensionTicket: (dimensionId: string, value: number | null) => void;
+  setBudgetIngresoEscenario: (
+    escenarioId: string,
+    year: "fy27" | "fy28" | "fy29",
+    value: number | null
   ) => void;
   resetScores: () => void;
   reload: () => void;
@@ -174,6 +188,95 @@ function useWorkshopSessionState(): WorkshopSessionApi {
     [patchSession]
   );
 
+  const setBudgetPersonas = useCallback(
+    (
+      part: "nfq" | "inerco",
+      field: "fte" | "costeMedioK",
+      value: number | null
+    ) => {
+      const nextVal = value === null ? null : clampBudgetNumber(value);
+      patchSession((prev) => {
+        const b = prev.budget;
+        const cur = b[part];
+        return {
+          ...prev,
+          budget: {
+            ...b,
+            [part]: { ...cur, [field]: nextVal },
+          },
+        };
+      });
+    },
+    [patchSession]
+  );
+
+  const setBudgetFacturacionPorFteK = useCallback(
+    (value: number | null) => {
+      const nextVal = value === null ? null : clampBudgetNumber(value);
+      patchSession((prev) => ({
+        ...prev,
+        budget: { ...prev.budget, facturacionPorFteK: nextVal },
+      }));
+    },
+    [patchSession]
+  );
+
+  const setBudgetTicketMedioPonderadoK = useCallback(
+    (value: number | null) => {
+      const nextVal = value === null ? null : clampBudgetNumber(value);
+      patchSession((prev) => ({
+        ...prev,
+        budget: { ...prev.budget, ticketMedioPonderadoK: nextVal },
+      }));
+    },
+    [patchSession]
+  );
+
+  const setBudgetDimensionTicket = useCallback(
+    (dimensionId: string, value: number | null) => {
+      const nextVal = value === null ? null : clampBudgetNumber(value);
+      patchSession((prev) => ({
+        ...prev,
+        budget: {
+          ...prev.budget,
+          ticketsPorDimension: {
+            ...prev.budget.ticketsPorDimension,
+            [dimensionId]: nextVal,
+          },
+        },
+      }));
+    },
+    [patchSession]
+  );
+
+  const setBudgetIngresoEscenario = useCallback(
+    (
+      escenarioId: string,
+      year: "fy27" | "fy28" | "fy29",
+      value: number | null
+    ) => {
+      const nextVal = value === null ? null : clampBudgetNumber(value);
+      patchSession((prev) => {
+        const row = prev.budget.ingresosPorEscenario[escenarioId] ?? {
+          fy27: null,
+          fy28: null,
+          fy29: null,
+        };
+        return {
+          ...prev,
+          budget: {
+            ...prev.budget,
+            ingresosPorEscenario: {
+              ...prev.budget.ingresosPorEscenario,
+              [escenarioId]: { ...row, [year]: nextVal },
+            },
+          },
+        };
+      });
+    },
+    [patchSession]
+  );
+
   const resetScores = useCallback(() => {
     if (
       !confirm(
@@ -189,6 +292,7 @@ function useWorkshopSessionState(): WorkshopSessionApi {
       susceptibilityByServiceLine: fresh.susceptibilityByServiceLine,
       fitByServiceAndSector: {},
       fitByServiceAndGeo: {},
+      budget: prev.budget,
     }));
   }, [patchSession]);
 
@@ -210,6 +314,11 @@ function useWorkshopSessionState(): WorkshopSessionApi {
       setSectorFit,
       setGeoFit,
       setPieceSusceptibility,
+      setBudgetPersonas,
+      setBudgetFacturacionPorFteK,
+      setBudgetTicketMedioPonderadoK,
+      setBudgetDimensionTicket,
+      setBudgetIngresoEscenario,
       resetScores,
       reload,
       persist,
@@ -222,6 +331,11 @@ function useWorkshopSessionState(): WorkshopSessionApi {
       setSectorFit,
       setGeoFit,
       setPieceSusceptibility,
+      setBudgetPersonas,
+      setBudgetFacturacionPorFteK,
+      setBudgetTicketMedioPonderadoK,
+      setBudgetDimensionTicket,
+      setBudgetIngresoEscenario,
       resetScores,
       reload,
       persist,

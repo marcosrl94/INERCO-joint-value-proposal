@@ -1,18 +1,17 @@
 import {
   budgetDimensionesIngreso,
   budgetEscenariosProyectos,
-  budgetFacturacionPorFteK,
   budgetFteParams,
-  budgetIngresosVisionK,
   budgetIngresosVisionNota,
   budgetInversionPersonasK,
-  budgetTicketMedioPonderadoK,
   fteImplicitoDesdeIngresosK,
 } from "@/workshop/data/workshopContent";
 import { SectionShell } from "@/workshop/components/SectionShell";
 import { EditableNote } from "@/workshop/components/EditableNote";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useWorkshopSession } from "@/workshop/hooks/useWorkshopSession";
 import {
   Building2,
   CalendarRange,
@@ -29,16 +28,78 @@ function formatFteEs(n: number) {
   });
 }
 
+/** Valores almacenados en miles de euros (k€) */
+function formatKiloEuros(n: number) {
+  return `${n.toLocaleString("es-ES")} k€`;
+}
+
+function parseOptionalNumber(s: string): number | null {
+  const t = s.trim();
+  if (t === "") return null;
+  const n = Number.parseFloat(t.replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+function BudgetNumInput({
+  value,
+  onCommit,
+  className,
+  "aria-label": ariaLabel,
+}: {
+  value: number | null;
+  onCommit: (v: number | null) => void;
+  className?: string;
+  "aria-label"?: string;
+}) {
+  return (
+    <Input
+      type="text"
+      inputMode="decimal"
+      aria-label={ariaLabel}
+      className={cn(
+        "h-8 border-zinc-700 bg-zinc-950/80 text-right tabular-nums text-zinc-200 placeholder:text-zinc-600",
+        className
+      )}
+      value={value === null ? "" : String(value)}
+      placeholder="—"
+      onChange={(e) => {
+        const t = e.target.value;
+        if (t.trim() === "") {
+          onCommit(null);
+          return;
+        }
+        const n = parseOptionalNumber(t);
+        if (n !== null) onCommit(n);
+      }}
+    />
+  );
+}
+
 export function BudgetSection() {
-  const invNfq = budgetInversionPersonasK(
-    budgetFteParams.nfq.fte,
-    budgetFteParams.nfq.costeMedioFteKEur
-  );
-  const invInerco = budgetInversionPersonasK(
-    budgetFteParams.inerco.fte,
-    budgetFteParams.inerco.costeMedioFteKEur
-  );
-  const totalPersonas = invNfq + invInerco;
+  const {
+    session,
+    setBudgetPersonas,
+    setBudgetFacturacionPorFteK,
+    setBudgetTicketMedioPonderadoK,
+    setBudgetDimensionTicket,
+    setBudgetIngresoEscenario,
+  } = useWorkshopSession();
+  const b = session.budget;
+
+  const invNfq =
+    b.nfq.fte != null && b.nfq.costeMedioK != null
+      ? budgetInversionPersonasK(b.nfq.fte, b.nfq.costeMedioK)
+      : null;
+  const invInerco =
+    b.inerco.fte != null && b.inerco.costeMedioK != null
+      ? budgetInversionPersonasK(b.inerco.fte, b.inerco.costeMedioK)
+      : null;
+  const totalPersonas =
+    invNfq != null || invInerco != null
+      ? (invNfq ?? 0) + (invInerco ?? 0)
+      : null;
+
+  const factK = b.facturacionPorFteK;
 
   return (
     <SectionShell
@@ -46,7 +107,7 @@ export function BudgetSection() {
       slideIndex={5}
       eyebrow="06 · Inversión"
       title="Inversión y capacidad"
-      description="Coste de personas año 1 por parte, escenarios de volumen de proyectos e ingresos conjuntos FY27–FY29 según ticket medio por dimensión. Cifras orientativas para debate; conviene validar supuestos con finanzas de cada parte."
+      description="Cifras sin prefijar (en miles de euros, k€): rellenad en sesión FTE, costes, regla de facturación por FTE e ingresos por escenario; los totales y FTE implícitos se calculan cuando las variables estén informadas."
     >
       {/* Inversión por parte — año 1 */}
       <div className="mb-10 rounded-2xl border border-white/[0.08] bg-zinc-900/45 p-5 md:p-6">
@@ -64,7 +125,8 @@ export function BudgetSection() {
             variant="outline"
             className="shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-200/90"
           >
-            Total personas ≈ {totalPersonas} k€
+            Total personas{" "}
+            {totalPersonas != null ? `≈ ${formatKiloEuros(totalPersonas)}` : "—"}
           </Badge>
         </div>
 
@@ -86,14 +148,27 @@ export function BudgetSection() {
                     NFQ
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">
-                  {budgetFteParams.nfq.fte}
+                <td className="px-4 py-3 text-right">
+                  <BudgetNumInput
+                    aria-label="FTE NFQ"
+                    value={b.nfq.fte}
+                    onCommit={(v) => setBudgetPersonas("nfq", "fte", v)}
+                    className="max-w-[7rem] ml-auto"
+                  />
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-zinc-400">
-                  {budgetFteParams.nfq.costeMedioFteKEur}
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <BudgetNumInput
+                      aria-label="Coste medio NFQ k€/FTE·año"
+                      value={b.nfq.costeMedioK}
+                      onCommit={(v) => setBudgetPersonas("nfq", "costeMedioK", v)}
+                      className="max-w-[7rem] ml-auto"
+                    />
+                    <span className="text-xs text-zinc-500">k€</span>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-right text-base font-semibold tabular-nums text-emerald-200/90">
-                  {invNfq}
+                  {invNfq != null ? formatKiloEuros(invNfq) : "—"}
                 </td>
               </tr>
               <tr className="border-b border-zinc-800/70 hover:bg-zinc-800/30">
@@ -103,14 +178,29 @@ export function BudgetSection() {
                     INERCO
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">
-                  {budgetFteParams.inerco.fte}
+                <td className="px-4 py-3 text-right">
+                  <BudgetNumInput
+                    aria-label="FTE INERCO"
+                    value={b.inerco.fte}
+                    onCommit={(v) => setBudgetPersonas("inerco", "fte", v)}
+                    className="max-w-[7rem] ml-auto"
+                  />
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-zinc-400">
-                  {budgetFteParams.inerco.costeMedioFteKEur}
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <BudgetNumInput
+                      aria-label="Coste medio INERCO k€/FTE·año"
+                      value={b.inerco.costeMedioK}
+                      onCommit={(v) =>
+                        setBudgetPersonas("inerco", "costeMedioK", v)
+                      }
+                      className="max-w-[7rem] ml-auto"
+                    />
+                    <span className="text-xs text-zinc-500">k€</span>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-right text-base font-semibold tabular-nums text-emerald-200/90">
-                  {invInerco}
+                  {invInerco != null ? formatKiloEuros(invInerco) : "—"}
                 </td>
               </tr>
             </tbody>
@@ -123,14 +213,16 @@ export function BudgetSection() {
                   Total inversión personas (lanzamiento, ambas partes)
                 </td>
                 <td className="px-4 py-3 text-right text-lg font-semibold tabular-nums text-zinc-100">
-                  {totalPersonas} k€
+                  {totalPersonas != null ? formatKiloEuros(totalPersonas) : "—"}
                 </td>
               </tr>
             </tfoot>
           </table>
         </div>
         <p className="mt-3 text-[11px] text-zinc-600">
-          Los supuestos de FTE y coste medio pueden ajustarse para reflejar el acuerdo interno de cada parte; el total se actualiza automáticamente.
+          Los supuestos de FTE y coste medio pueden ajustarse para reflejar el
+          acuerdo interno de cada parte; el total se actualiza cuando ambos
+          valores de una fila están informados.
         </p>
       </div>
 
@@ -141,7 +233,10 @@ export function BudgetSection() {
           Escenarios según nº de proyectos vendidos
         </p>
         <p className="mb-4 max-w-3xl text-xs leading-relaxed text-zinc-500">
-          La base de coste fijo (personas año 1) es independiente del primer cierre; estos escenarios describen cómo escalar gasto variable, refuerzo de equipo y riesgo de saturación cuando sube el volumen de proyectos.
+          La base de coste fijo (personas año 1) es independiente del primer
+          cierre; estos escenarios describen cómo escalar gasto variable,
+          refuerzo de equipo y riesgo de saturación cuando sube el volumen de
+          proyectos.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           {budgetEscenariosProyectos.map((sc, i) => (
@@ -184,11 +279,30 @@ export function BudgetSection() {
               Ingresos (visión FY27–FY29)
             </p>
             <p className="mt-2 max-w-3xl text-xs leading-relaxed text-zinc-500">
-              {budgetIngresosVisionNota} Regla de referencia para FTE implícito:{" "}
+              {budgetIngresosVisionNota}{" "}
               <span className="font-medium text-zinc-400">
-                {budgetFacturacionPorFteK} k€/FTE·año
+                Regla de referencia para FTE implícito (k€/FTE·año):
+              </span>{" "}
+              <span className="inline-flex items-center gap-1 align-middle">
+                <BudgetNumInput
+                  aria-label="Facturación por FTE k€/año"
+                  value={b.facturacionPorFteK}
+                  onCommit={setBudgetFacturacionPorFteK}
+                  className="inline-flex h-7 max-w-[5.5rem]"
+                />
+                <span className="text-xs text-zinc-500">k€</span>
               </span>
-              . Ticket medio ponderado por dimensión (orientativo): ~{budgetTicketMedioPonderadoK} k€.
+              . Ticket medio ponderado (opcional):{" "}
+              <span className="inline-flex items-center gap-1 align-middle">
+                <BudgetNumInput
+                  aria-label="Ticket medio ponderado k€"
+                  value={b.ticketMedioPonderadoK}
+                  onCommit={setBudgetTicketMedioPonderadoK}
+                  className="inline-flex h-7 max-w-[5.5rem]"
+                />
+                <span className="text-xs text-zinc-500">k€</span>
+              </span>
+              .
             </p>
           </div>
         </div>
@@ -216,8 +330,16 @@ export function BudgetSection() {
                       <p className="mt-1 text-[11px] text-zinc-600">{d.nota}</p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums font-medium text-emerald-200/90">
-                    {d.ticketMedioK} k€
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <BudgetNumInput
+                        aria-label={`Ticket ${d.nombre}`}
+                        value={b.ticketsPorDimension[d.id] ?? null}
+                        onCommit={(v) => setBudgetDimensionTicket(d.id, v)}
+                        className="max-w-[6rem]"
+                      />
+                      <span className="text-xs text-zinc-500">k€</span>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -234,40 +356,41 @@ export function BudgetSection() {
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-950/90 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                 <th className="px-4 py-3">Escenario</th>
-                <th className="px-4 py-3 text-right">FY27</th>
-                <th className="px-4 py-3 text-right">FY28</th>
-                <th className="px-4 py-3 text-right">FY29</th>
+                <th className="px-4 py-3 text-right">FY27 (k€)</th>
+                <th className="px-4 py-3 text-right">FY28 (k€)</th>
+                <th className="px-4 py-3 text-right">FY29 (k€)</th>
               </tr>
             </thead>
             <tbody className="text-zinc-300">
-              {budgetIngresosVisionK.map((row) => {
-                const sc = budgetEscenariosProyectos.find(
-                  (s) => s.id === row.escenarioId
-                );
+              {budgetEscenariosProyectos.map((sc) => {
+                const row = b.ingresosPorEscenario[sc.id];
                 return (
                   <tr
-                    key={row.escenarioId}
+                    key={sc.id}
                     className="border-b border-zinc-800/70 last:border-0 hover:bg-zinc-800/25"
                   >
                     <td className="px-4 py-3">
                       <span className="font-medium text-zinc-200">
-                        {sc?.etiqueta ?? row.escenarioId}
+                        {sc.etiqueta}
                       </span>
-                      {sc ? (
-                        <p className="mt-0.5 text-[11px] text-zinc-600">
-                          {sc.proyectosVendidos}
-                        </p>
-                      ) : null}
+                      <p className="mt-0.5 text-[11px] text-zinc-600">
+                        {sc.proyectosVendidos}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-emerald-200/90">
-                      {row.fy27}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-emerald-200/90">
-                      {row.fy28}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-emerald-200/90">
-                      {row.fy29}
-                    </td>
+                    {(["fy27", "fy28", "fy29"] as const).map((yr) => (
+                      <td key={yr} className="px-2 py-2 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <BudgetNumInput
+                            aria-label={`${sc.etiqueta} ${yr} k€`}
+                            value={row?.[yr] ?? null}
+                            onCommit={(v) =>
+                              setBudgetIngresoEscenario(sc.id, yr, v)
+                            }
+                          />
+                          <span className="text-xs text-zinc-500">k€</span>
+                        </div>
+                      </td>
+                    ))}
                   </tr>
                 );
               })}
@@ -277,7 +400,10 @@ export function BudgetSection() {
 
         <p className="mb-3 mt-6 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
           <CalendarRange className="size-3.5 text-emerald-400/80" />
-          FTE implícitos por escenario (ingresos ÷ {budgetFacturacionPorFteK} k€/FTE·año)
+          FTE implícitos por escenario
+          {factK != null && factK > 0
+            ? ` (ingresos ÷ ${factK} k€/FTE·año)`
+            : " (indicar facturación / FTE arriba)"}
         </p>
         <div className="overflow-hidden rounded-xl border border-zinc-800/90">
           <table className="w-full border-collapse text-left text-sm">
@@ -290,34 +416,36 @@ export function BudgetSection() {
               </tr>
             </thead>
             <tbody className="text-zinc-300">
-              {budgetIngresosVisionK.map((row) => {
-                const sc = budgetEscenariosProyectos.find(
-                  (s) => s.id === row.escenarioId
-                );
+              {budgetEscenariosProyectos.map((sc) => {
+                const row = b.ingresosPorEscenario[sc.id];
                 return (
                   <tr
-                    key={row.escenarioId}
+                    key={sc.id}
                     className="border-b border-zinc-800/70 last:border-0 hover:bg-zinc-800/25"
                   >
                     <td className="px-4 py-3">
                       <span className="font-medium text-zinc-200">
-                        {sc?.etiqueta ?? row.escenarioId}
+                        {sc.etiqueta}
                       </span>
-                      {sc ? (
-                        <p className="mt-0.5 text-[11px] text-zinc-600">
-                          {sc.proyectosVendidos}
-                        </p>
-                      ) : null}
+                      <p className="mt-0.5 text-[11px] text-zinc-600">
+                        {sc.proyectosVendidos}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-amber-200/90">
-                      {formatFteEs(fteImplicitoDesdeIngresosK(row.fy27))} FTE
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-amber-200/90">
-                      {formatFteEs(fteImplicitoDesdeIngresosK(row.fy28))} FTE
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-amber-200/90">
-                      {formatFteEs(fteImplicitoDesdeIngresosK(row.fy29))} FTE
-                    </td>
+                    {(["fy27", "fy28", "fy29"] as const).map((yr) => {
+                      const ing = row?.[yr];
+                      const fte =
+                        ing != null && factK != null && factK > 0
+                          ? fteImplicitoDesdeIngresosK(ing, factK)
+                          : null;
+                      return (
+                        <td
+                          key={yr}
+                          className="px-4 py-3 text-right tabular-nums text-amber-200/90"
+                        >
+                          {fte != null ? `${formatFteEs(fte)} FTE` : "—"}
+                        </td>
+                      );
+                    })}
                   </tr>
                 );
               })}

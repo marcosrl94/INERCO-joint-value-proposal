@@ -153,21 +153,11 @@ export interface GtmHorizon {
   lecturaAlcance: string;
 }
 
-/** Parámetros editables — coste medio en k€/FTE/año (carga completa) */
+/** Metadatos del bloque personas — los valores numéricos se capturan en sesión */
 export const budgetFteParams = {
-  periodo: "Año 1 · lanzamiento conjunto",
-  nfq: {
-    fte: 2,
-    /** k€ por FTE y año (promedio) */
-    costeMedioFteKEur: 70,
-  },
-  inerco: {
-    fte: 2,
-    /** Ligeramente inferior a NFQ (estructura de coste / mix) */
-    costeMedioFteKEur: 58,
-  },
+  periodo: "Año 1 · acuerdo por definir en sesión",
   nota:
-    "Compromiso de carga completa año 1 (2+2 FTE); ancla de capacidad frente a los escenarios de ingresos y FTE implícitos más abajo. Cifras orientativas; ajustar coste medio y FTE según acuerdo interno de cada parte.",
+    "Unidad de todas las cifras editables de este bloque: miles de euros (k€); p. ej. 85 → 85.000 €, no euros sueltos. Variables: FTE por parte × coste medio (k€/FTE·año, carga equiparable) → inversión en personas (k€). Sirve de ancla frente a ingresos conjuntos e hipótesis de facturación por FTE más abajo. Rellenar en sala según finanzas de cada parte.",
 } as const;
 
 export function budgetInversionPersonasK(
@@ -185,68 +175,53 @@ export interface ProjectVolumeScenario {
   implicacionInversion: string;
 }
 
-/** Dimensión de ingreso para ticket medio (alineable con líneas de oferta / mix de proyectos) */
+/** Dimensión de ingreso para ticket medio (valores k€ en sesión) */
 export interface BudgetDimensionIngreso {
   id: string;
   nombre: string;
-  /** Ticket medio orientativo por proyecto o SOW tipo (k€) */
-  ticketMedioK: number;
   nota?: string;
-}
-
-/** Ingresos anuales estimados (k€) por escenario de volumen — coherentes con ticket ponderado y mix */
-export interface BudgetIngresosPorEscenario {
-  escenarioId: string;
-  fy27: number;
-  fy28: number;
-  fy29: number;
 }
 
 export const budgetDimensionesIngreso: BudgetDimensionIngreso[] = [
   {
     id: "net-zero-industrial",
     nombre: "Net Zero / industrial",
-    ticketMedioK: 85,
     nota: "SOW tipo: hoja de ruta, modelización, integración con activos.",
   },
   {
     id: "riesgo-fisico",
     nombre: "Riesgo físico / transición",
-    ticketMedioK: 95,
     nota: "Mayor componente datos y escenarios; proyectos algo mayores.",
   },
   {
     id: "reporting-finanzas",
     nombre: "Reporting / CSRD / marco regulatorio",
-    ticketMedioK: 55,
     nota: "Proyectos más acotados; repetición y producto.",
   },
   {
     id: "otros-mix",
     nombre: "Otros / mix sectorial",
-    ticketMedioK: 48,
     nota: "PoCs, diagnósticos, bundles con INERCO fuera del core.",
   },
 ];
 
-/** Ticket medio ponderado usado para el rango de ingresos por escenario (editable) */
-export const budgetTicketMedioPonderadoK = 72;
-
-/** Facturación anual referencia por FTE equivalente (k€) — FTE implícito = ingresos k€ / este valor */
-export const budgetFacturacionPorFteK = 100;
-
-export function fteImplicitoDesdeIngresosK(ingresosK: number): number {
-  return ingresosK / budgetFacturacionPorFteK;
+/** FTE implícito = ingresos anuales conjuntos (k€) ÷ facturación de referencia por FTE (k€/FTE·año), ambos definidos en sesión */
+export function fteImplicitoDesdeIngresosK(
+  ingresosK: number,
+  facturacionPorFteK: number
+): number | null {
+  if (
+    !Number.isFinite(ingresosK) ||
+    !Number.isFinite(facturacionPorFteK) ||
+    facturacionPorFteK <= 0
+  ) {
+    return null;
+  }
+  return ingresosK / facturacionPorFteK;
 }
 
-export const budgetIngresosVisionK: BudgetIngresosPorEscenario[] = [
-  { escenarioId: "pocos", fy27: 195, fy28: 340, fy29: 505 },
-  { escenarioId: "medio", fy27: 430, fy28: 720, fy29: 1040 },
-  { escenarioId: "alto", fy27: 860, fy28: 1440, fy29: 2160 },
-];
-
 export const budgetIngresosVisionNota =
-  "Facturación conjunta NFQ×INERCO anual (k€) por escenario de volumen. Los FTE implícitos (tabla siguiente) se derivan de la regla editable de ~100 k€ de facturación por FTE y año. La inversión fija 2+2 FTE del año 1 es el punto de partida acordado; en escenarios altos pueden añadirse refuerzos, partners o subcontratación.";
+  "Facturación conjunta anual en miles de euros (k€) por escenario de volumen: rellenar en sesión. Los FTE implícitos (tabla siguiente) = ingresos (k€) ÷ regla de facturación por FTE y año (k€/FTE·año), ambos acordados en sala. La base de personas (tabla superior) es independiente; en escenarios altos pueden valorarse refuerzos, partners o subcontratación.";
 
 export interface DecisionTag {
   id: string;
@@ -1116,7 +1091,7 @@ export const budgetEscenariosProyectos: ProjectVolumeScenario[] = [
     etiqueta: "Arranque",
     proyectosVendidos: "0–2 proyectos",
     descripcion:
-      "Fase de validación: foco en PoCs y pipeline; el coste fijo de 2+2 FTE se absorbe con visión de ramp-up.",
+      "Fase de validación: foco en PoCs y pipeline; la base de personas acordada se absorbe con visión de ramp-up.",
     implicacionInversion:
       "Mantener base de personas acordada; priorizar gasto variable bajo (viajes, datos externos) y posponer contrataciones adicionales hasta cerrar ventas.",
   },
@@ -1145,7 +1120,7 @@ export const decisionTags: DecisionTag[] = [
   { id: "sectores", label: "Sectores prioritarios", defaultValue: "Energía e infraestructuras; Agroalimentario; Industria pesada" },
   { id: "pocs", label: "2 PoCs a lanzar", defaultValue: "ALQUID / Net Zero; Riesgo físico / transición; Suite CSRD (en prep.)" },
   { id: "gtm", label: "GTM inicial", defaultValue: "ES/PT — utilities, infra, agro mid-cap, industrial" },
-  { id: "equipo", label: "Equipo mínimo", defaultValue: "Base lanzamiento: 2 FTE NFQ + 2 FTE INERCO (costes medios según parte de inversión)" },
+  { id: "equipo", label: "Equipo mínimo", defaultValue: "Completar en bloque Inversión (FTE y coste por parte)." },
 ];
 
 /** Pasos operativos posteriores al cierre en sala — editable en datos */
